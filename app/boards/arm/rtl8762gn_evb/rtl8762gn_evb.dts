@@ -1,0 +1,55 @@
+/dts-v1/;
+#include <realtek/rtl8762gn_evb.dtsi>
+#include "rtl8762gn_evb-pinctrl.dtsi"
+
+/ {
+	model = "RealTek rtl8762gn evb ";
+	compatible = "realtek,rtl8762gn_evb";
+
+	chosen {
+		zephyr,sram = &ram_data;
+		zephyr,flash = &flash;
+		zephyr,itcm = &ram_code;
+		zephyr,console = &uart2;
+		zephyr,shell-uart = &uart2;
+		zephyr,flash-controller = &fmc;
+	};
+
+	/* These aliases are provided for compatibility with samples */
+	aliases {
+	};
+
+};
+
+&fmc {
+	status = "okay";
+};
+
+&flash {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		app_partition: partition@0 {
+			label = "app-image";
+			reg = <0x0 DT_SIZE_K(512)>;
+		};
+		storage_partition: partition@80000 {
+			label = "storage";
+			reg = <0x80000 DT_SIZE_K(16)>;
+		};
+	};
+};
+
+&cpu {
+	clock-frequency = <40000000>;
+};
+&uart2 {
+	pinctrl-0 = <&uart2_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	current-speed = <2000000>;
+	parity = "none";   
+	stop-bits = "1";
+	data-bits = <8>;
+};

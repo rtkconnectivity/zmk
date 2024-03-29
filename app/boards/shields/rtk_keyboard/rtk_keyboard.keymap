@@ -1,0 +1,32 @@
+/*
+ * Copyright (c) 2023 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/rgb.h>
+
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+
+        default {
+            bindings = <
+    &kp PAUS     &kp Q    &kp W     &kp E   &kp R   &kp U   &kp I              &kp O       &kp P                          &kp SCROLLLOCK   &kp KP_N7      &kp KP_N8     &kp KP_N9     &kp KPLS      &kp SYS_WAKE  &kp C_AL_MAIL
+    &kp C_POWER  &kp TAB  &kp CAPS  &kp F3  &kp T   &kp Y   &kp RIGHT_BRACKET  &kp F7                   &kp LEFT_BRACKET  &kp BACKSPACE    &kp KP_N4      &kp KP_N5     &kp KP_N6     &kp LSHFT     &kp LWIN      &kp C_AC_FAVORITES
+                 &kp A    &kp S     &kp D   &kp F   &kp J   &kp K              &kp L       &kp SEMI                       &kp SLASH        &kp KP_N1      &kp KP_N2     &kp KP_N3     &kp KP_ENTER  &kp RSHFT     &kp K_FORWARD       &kp RWIN
+    &kp K_SLEEP  &kp ESC            &kp F4  &kp G   &kp H   &kp F6             &kp DOLLAR  &kp COLON    &kp LALT          &kp F11          &kp SPACE      &kp KP_N0     &kp END       &kp UP_ARROW  &kp K_VOL_DN  //&kp Stop            &kp Computer
+    &kp INS      &kp Z    &kp X     &kp C   &kp V   &kp M   &kp COMMA          &kp DOT                                    &kp ENTER        &kp LNLCK      &kp KP_SLASH  &kp ASTERISK                &kp K_VOL_UP  &kp K_BACK            //&kp Stop
+    &kp SYS_WAKE                            &kp B   &kp N                                  &kp SLASH    &kp RALT          &kp F12          &kp DARW       &kp RARW                    &kp LARW      &kp C_NEXT    &kp K_REFRESH         &kp C_AL_CAL  
+    &kp LCTL              &kp F1    &kp F2  &kp N5  &kp N6  &kp PLUS           &kp F8                                     &kp F9           &kp DEL        &kp RCTL      &kp PAGE_UP   &kp HOME      &kp C_PREV    //&kp K_Mute            
+    &kp F5       &kp N1   &kp N2    &kp N3  &kp N4  &kp N7  &kp N8             &kp N9      &kp N0       &kp PRINTSCREEN   &kp F10          &kp K_POWER    &kp K_SLEEP   &kp PAGE_DOWN &kp END       //&kp Media     //&kp Search
+            >;
+            
+        };
+        
+    };
+};
+

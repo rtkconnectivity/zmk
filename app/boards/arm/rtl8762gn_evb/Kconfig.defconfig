@@ -1,0 +1,6 @@
+if BOARD_RTL8762GN_EVB
+
+config BOARD
+	default "rtl8762gn_evb"
+
+endif #BOARD_RTL8762GN_EVB

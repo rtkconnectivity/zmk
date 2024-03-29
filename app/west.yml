@@ -3,7 +3,7 @@ manifest:
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
     - name: rtkconnectivity
-      url-base: git@github.com:rtkconnectivity
+      url-base: https://github.com/rtkconnectivity
   projects:
     - name: zephyr
       remote: rtkconnectivity
@@ -22,6 +22,23 @@ manifest:
           - hal_xtensa
           - hal_st
           - hal_ti
+          - hal_ambiq
+          - hal_atmel
+          - hal_espressif
+          - hal_ethos_u
+          - hal_gigadevice
+          - hal_intel
+          - hal_nordic
+          - hal_nuvoton
+          - hal_quicklogic
+          - hal_renesas
+          - hal_rpi_pico
+          - hal_telink
+          - hal_wurthelektronik
+          - hal_stm32
+          - cmsis-dsp
+          - cmsis-nn
+          - fatfs
           - loramac-node
           - mcuboot
           - mcumgr
