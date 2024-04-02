@@ -9,56 +9,52 @@
 &usb {
     status = "okay";
 };
-&timer2 {
-    status = "okay";
-    prescaler = <1>;
-    pwm2: pwm {
-        status = "okay";
-        pinctrl-0 = <&pwm2_default>;
-        pinctrl-names = "default";
-    };
-};
-&timer3 {
-    status = "okay";
-    prescaler = <1>;
-    pwm3: pwm {
-        status = "okay";
-        pinctrl-0 = <&pwm3_default>;
-        pinctrl-names = "default";
-    };
-};
+//&timer2 {
+//    status = "okay";
+//    prescaler = <1>;
+//    pwm2: pwm {
+//        status = "okay";
+//        pinctrl-0 = <&pwm2_default>;
+//        pinctrl-names = "default";
+//    };
+//};
+//&timer3 {
+//    status = "okay";
+//    prescaler = <1>;
+//    pwm3: pwm {
+//        status = "okay";
+//        pinctrl-0 = <&pwm3_default>;
+//        pinctrl-names = "default";
+//    };
+//};
+//
+//&timer4 {
+//    status = "okay";
+//    prescaler = <1>;
+//    pwm4: pwm {
+//        status = "okay";
+//        pinctrl-0 = <&pwm4_default>;
+//        pinctrl-names = "default";
+//    };
+//};
 
-&timer4 {
-    status = "okay";
-    prescaler = <1>;
-    pwm4: pwm {
-        status = "okay";
-        pinctrl-0 = <&pwm4_default>;
-        pinctrl-names = "default";
-    };
-};
-
-&timer6 {
-	status = "okay";
-	prescaler = <1>;
-};
-&pinctrl {
-	pwm2_default: pwm2_default {
-		group1 {
-			psels = <RTL87X2G_PSEL(TIMER_PWM2, P9_4,DIR_OUT, DRV_LOW, PULL_DOWN)>;
-		};
-	};
-	pwm3_default: pwm3_default {
-		group1 {
-			psels = <RTL87X2G_PSEL(TIMER_PWM3, P9_5,DIR_OUT, DRV_LOW, PULL_DOWN)>;
-		};
-	};
-	pwm4_default: pwm4_default {
-		group1 {
-			psels = <RTL87X2G_PSEL(TIMER_PWM4, P9_6,DIR_OUT, DRV_LOW, PULL_DOWN)>;
-		};
-	};
-};
+//&pinctrl {
+//	pwm2_default: pwm2_default {
+//		group1 {
+//			psels = <RTL87X2G_PSEL(TIMER_PWM2, P9_4,DIR_OUT, DRV_LOW, PULL_DOWN)>;
+//		};
+//	};
+//	pwm3_default: pwm3_default {
+//		group1 {
+//			psels = <RTL87X2G_PSEL(TIMER_PWM3, P9_5,DIR_OUT, DRV_LOW, PULL_DOWN)>;
+//		};
+//	};
+//	pwm4_default: pwm4_default {
+//		group1 {
+//			psels = <RTL87X2G_PSEL(TIMER_PWM4, P9_6,DIR_OUT, DRV_LOW, PULL_DOWN)>;
+//		};
+//	};
+//};
 	
 / {      	
     chosen {
@@ -91,7 +87,7 @@
     };
     default_transform: matrix_transform {
         compatible = "zmk,matrix-transform";
-        rows = <3>;
+        rows = <8>;
         columns = <18>;
         map = <
             RC(0,0) RC(0,1) RC(0,2) RC(0,3) RC(0,4) RC(0,5) RC(0,6) RC(0,7) RC(0,8) RC(0,9)          RC(0,11) RC(0,12) RC(0,13) RC(0,14) RC(0,15) RC(0,16)
