@@ -8,7 +8,7 @@
 &pinctrl {
 	uart2_default: uart2_default {
 		group1 {
-			psels = <RTL87X2G_PSEL(UART2_TX, P3_1, DIR_OUT, DRV_HIGH, PULL_UP)>, 
+			psels = <RTL87X2G_PSEL(UART2_TX, P3_2, DIR_OUT, DRV_HIGH, PULL_UP)>,
 			<RTL87X2G_PSEL(UART2_RX, P3_3, DIR_IN, DRV_HIGH, PULL_UP)>;
 		};
 	};
