@@ -147,6 +147,15 @@ static int bvd_init(const struct device *dev) {
     };
 
     drv_data->as.resolution = 12;
+#elif CONFIG_ADC
+    drv_data->acc = (struct adc_channel_cfg){
+        .gain = ADC_GAIN_1,
+        .reference = ADC_REF_INTERNAL,
+        .acquisition_time = ADC_ACQ_TIME(ADC_ACQ_TIME_DEFAULT, 40),
+
+        //.input_positive = SAADC_CH_PSELP_PSELP_AnalogInput0 + drv_cfg->io_channel.channel,
+    };
+    drv_data->as.resolution = 12;
 #else
 #error Unsupported ADC
 #endif

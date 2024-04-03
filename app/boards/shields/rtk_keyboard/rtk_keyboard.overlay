@@ -1,4 +1,5 @@
 #include <dt-bindings/zmk/matrix_transform.h>
+#include <dt-bindings/led/led.h>
 
 &gpioa {
     status = "okay";
@@ -9,57 +10,93 @@
 &usb {
     status = "okay";
 };
-//&timer2 {
-//    status = "okay";
-//    prescaler = <1>;
-//    pwm2: pwm {
-//        status = "okay";
-//        pinctrl-0 = <&pwm2_default>;
-//        pinctrl-names = "default";
-//    };
-//};
-//&timer3 {
-//    status = "okay";
-//    prescaler = <1>;
-//    pwm3: pwm {
-//        status = "okay";
-//        pinctrl-0 = <&pwm3_default>;
-//        pinctrl-names = "default";
-//    };
-//};
-//
-//&timer4 {
-//    status = "okay";
-//    prescaler = <1>;
-//    pwm4: pwm {
-//        status = "okay";
-//        pinctrl-0 = <&pwm4_default>;
-//        pinctrl-names = "default";
-//    };
-//};
+&timer2 {
+    status = "okay";
+    prescaler = <1>;
+    pwm2: pwm {
+        status = "okay";
+        pinctrl-0 = <&pwm2_default>;
+        pinctrl-names = "default";
+    };
+};
+&timer3 {
+    status = "okay";
+    prescaler = <1>;
+    pwm3: pwm {
+        status = "okay";
+        pinctrl-0 = <&pwm3_default>;
+        pinctrl-names = "default";
+    };
+};
 
-//&pinctrl {
-//	pwm2_default: pwm2_default {
-//		group1 {
-//			psels = <RTL87X2G_PSEL(TIMER_PWM2, P9_4,DIR_OUT, DRV_LOW, PULL_DOWN)>;
-//		};
-//	};
-//	pwm3_default: pwm3_default {
-//		group1 {
-//			psels = <RTL87X2G_PSEL(TIMER_PWM3, P9_5,DIR_OUT, DRV_LOW, PULL_DOWN)>;
-//		};
-//	};
-//	pwm4_default: pwm4_default {
-//		group1 {
-//			psels = <RTL87X2G_PSEL(TIMER_PWM4, P9_6,DIR_OUT, DRV_LOW, PULL_DOWN)>;
-//		};
-//	};
-//};
-	
+&timer4 {
+    status = "okay";
+    prescaler = <1>;
+    pwm4: pwm {
+        status = "okay";
+        pinctrl-0 = <&pwm4_default>;
+        pinctrl-names = "default";
+    };
+};
+
+&pinctrl {
+	pwm2_default: pwm2_default {
+		group1 {
+			psels = <RTL87X2G_PSEL(TIMER_PWM2, P9_4,DIR_OUT, DRV_LOW, PULL_DOWN)>;
+		};
+	};
+	pwm3_default: pwm3_default {
+		group1 {
+			psels = <RTL87X2G_PSEL(TIMER_PWM3, P9_5,DIR_OUT, DRV_LOW, PULL_DOWN)>;
+		};
+	};
+	pwm4_default: pwm4_default {
+		group1 {
+			psels = <RTL87X2G_PSEL(TIMER_PWM4, P9_6,DIR_OUT, DRV_LOW, PULL_DOWN)>;
+		};
+	};
+};
+
+&adc {
+    pinctrl-0 = <&adc_default>;
+    pinctrl-names = "default";
+    #address-cells = <1>;
+    #size-cells = <0>;
+    status = "okay";
+    channel@0 {
+        reg = <0>;
+        zephyr,gain = "ADC_GAIN_1";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,resolution = <12>;
+    };
+};	
 / {      	
     chosen {
         zmk,kscan = &kscan;
         zmk,matrix-transform = &default_transform;
+        zmk,battery = &vbatt;
+        zmk,backlight = &backlight;
+    };
+
+    vbatt: vbatt {
+        compatible = "zmk,battery-voltage-divider";
+        io-channels = <&adc 0>;
+        output-ohms = <100000>;
+        full-ohms = <(100000 + 100000)>;
+    };
+
+    backlight: pwmleds {
+        compatible = "pwm-leds";
+        pwm_led_0 {
+            pwms = <&pwm2 0 10000 PWM_POLARITY_NORMAL>;
+        };
+        pwm_led_1 {
+            pwms = <&pwm3 0 10000 PWM_POLARITY_NORMAL>;
+        };
+        pwm_led_2 {
+            pwms = <&pwm4 0 10000 PWM_POLARITY_NORMAL>;
+        };
     };
 	leds {
         compatible = "gpio-leds";
@@ -115,6 +152,11 @@
 };
 
 &pinctrl {
+    adc_default: adc_default {
+        group1 {
+            psels = <RTL87X2G_PSEL(SW_MODE, XO32K, DIR_IN, DRV_LOW, PULL_DOWN)>;
+        };
+    };
     kscan_default: kscan_default {
         group1 {
             psels = <RTL87X2G_PSEL(KEY_COL_0, P0_4, DIR_OUT, DRV_LOW, PULL_NONE)>,
