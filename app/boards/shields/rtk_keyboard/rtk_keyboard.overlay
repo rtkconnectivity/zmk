@@ -100,7 +100,7 @@
         };
     };
 	leds {
-        compatible = "gpio-leds";
+        compatible = "gpio-leds-all";
 		led_1: led_1 {
             cap-gpios = <&gpioa 16 GPIO_ACTIVE_HIGH>;
         };
