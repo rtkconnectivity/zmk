@@ -23,7 +23,7 @@
                  &kp A      &kp S     &kp D   &kp F   &kp J   &kp K              &kp L       &kp SEMI   &kp RWIN            &kp NUBS         &kp KP_N1      &kp KP_N2     &kp KP_N3     &kp KP_ENTER  &kp RSHFT     &kp K_FORWARD       &kp RWIN
     &kp K_SLEEP  &kp ESC              &kp F4  &kp G   &kp H   &kp F6             &kp DOLLAR  &kp SQT    &kp LALT            &kp F11          &kp SPACE      &kp KP_N0     &kp KP_DOT    &kp UP_ARROW  &kp K_VOL_DN  //&kp Stop            &kp Computer
     &kp RCTL     &kp Z      &kp X     &kp C   &kp V   &kp M   &kp COMMA          &kp DOT                                    &kp ENTER        &kp KP_NLCK    &kp KP_SLASH  &kp ASTERISK                &kp K_VOL_UP  &kp K_BACK            //&kp Stop
-    &kp SYS_WAKE                              &kp B   &kp N                      &mo FN      &kp SLASH    &kp RALT            &kp F12          &kp DARW       &kp RARW      &kp KP_MINUS  &kp LARW      &kp C_NEXT    &kp K_REFRESH         &kp C_AL_CAL  
+    &kp SYS_WAKE                              &kp B   &kp N                      &mo FN      &kp SLASH    &kp RALT            &kp F12          &kp DARW       &kp RARW      &kp KP_MINUS  &kp LARW      &kp C_NEXT    &kp K_REFREASH         &kp C_AL_CAL  
     &kp LCTL     &kp GRAVE  &kp F1    &kp F2  &kp N5  &kp N6  &kp EQUAL          &kp F8      &kp MINUS                      &kp F9           &kp DEL        &kp INS       &kp PAGE_UP   &kp HOME      &kp C_PREV    //&kp K_Mute            
     &kp F5       &kp N1     &kp N2    &kp N3  &kp N4  &kp N7  &kp N8             &kp N9      &kp N0       &kp PRINTSCREEN   &kp F10          &kp K_POWER    &kp K_SLEEP   &kp PAGE_DOWN &kp END       //&kp Media     //&kp Search
             >;        
