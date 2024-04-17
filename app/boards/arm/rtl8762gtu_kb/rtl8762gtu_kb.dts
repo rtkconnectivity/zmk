@@ -1,0 +1,82 @@
+/dts-v1/;
+#include <realtek/rtl8762gn_evb.dtsi>
+#include "rtl8762gtu_kb-pinctrl.dtsi"
+
+/ {
+	model = "RealTek rtl8762gku ";
+	compatible = "realtek,rtl8762gku";
+
+	chosen {
+		zephyr,sram = &ram_data;
+		zephyr,flash = &flash;
+		zephyr,code-partition = &app_partition;
+		zephyr,itcm = &ram_code;
+		zephyr,console = &uart2;
+		zephyr,shell-uart = &uart2;
+		zephyr,flash-controller = &fmc;
+		zephyr,entropy = &trng;
+	};
+
+	/* These aliases are provided for compatibility with samples */
+	aliases {
+	};
+
+};
+
+&flash {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		reserved: partition@0 {
+			label = "reserved-image";
+			reg = <0x0 DT_SIZE_K(4)>;
+		};
+		config_file: partition@1000 {
+			label = "config-file-image";
+			reg = <0x1000 DT_SIZE_K(4)>;
+		};
+		boot_patch_0: partition@2000 {
+			label = "boot-patch-0-image";
+			reg = <0x2000 DT_SIZE_K(32)>;
+		};
+		boot_patch_1: partition@a000 {
+			label = "boot-patch-1-image";
+			reg = <0xA000 DT_SIZE_K(32)>;
+		};
+		ota_header: partition@12000 {
+			label = "ota-header-image";
+			reg = <0x12000 DT_SIZE_K(4)>;
+		};
+		system_patch: partition@13000 {
+			label = "system-patch-image";
+			reg = <0x13000 DT_SIZE_K(32)>;
+		};
+		stack_patch: partition@1b000 {
+			label = "stack-patch-image";
+			reg = <0x1B000 DT_SIZE_K(72)>;
+		};
+		app_partition: partition@2d000 {
+			label = "app-image";
+			reg = <0x2D000 DT_SIZE_K(828)>;
+		};
+		storage_partition: partition@fc000 {
+			label = "storage";
+			reg = <0xFC000 DT_SIZE_K(16)>;
+		};
+	};
+};
+
+&cpu {
+	clock-frequency = <40000000>;
+};
+
+&uart2 {
+	pinctrl-0 = <&uart2_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	current-speed = <2000000>;
+	parity = "none";
+	stop-bits = "1";
+	data-bits = <8>;
+};

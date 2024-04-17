@@ -1,0 +1,35 @@
+#
+# Copyright (c) 2019 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+description: |
+    Allows defining the collection of gpio leds in ZMK.
+
+compatible: "zmk,gpio-leds-all"
+
+properties:
+  pwr-gpios:
+    type: phandle-array
+    required: true
+
+  cap-gpios:
+    type: phandle-array
+    required: true
+
+  num-gpios:
+    type: phandle-array
+    required: true
+
+  ble-gpios:
+    type: phandle-array
+    required: true
+
+  ppt-gpios:
+    type: phandle-array
+    required: true
+
+  other-gpios:
+    type: phandle-array
+    required: true

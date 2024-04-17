@@ -10,6 +10,7 @@
 #include <zephyr/kernel.h>
 #include <zmk/event_manager.h>
 #include <zmk/keys.h>
+#include <zmk/mode_monitor.h>
 
 struct zmk_keycode_state_changed {
     uint16_t usage_page;
@@ -44,26 +45,22 @@ zmk_keycode_state_changed_from_encoded(uint32_t encoded, bool pressed, int64_t t
     {
         if(id == HID_USAGE_KEY_KEYBOARD_CAPS_LOCK && pressed == 1 && caps_lock_flag == 0)
         {
-            Pad_Config(P10_0, PAD_SW_MODE, PAD_IS_PWRON, PAD_PULL_DOWN, PAD_OUT_ENABLE, PAD_OUT_HIGH);
-            Pad_Config(P2_7, PAD_SW_MODE, PAD_IS_PWRON, PAD_PULL_DOWN, PAD_OUT_ENABLE, PAD_OUT_LOW);
+            cap_led_on();
             caps_lock_flag = 1;
         }
         else if(id == HID_USAGE_KEY_KEYBOARD_CAPS_LOCK && pressed == 1 && caps_lock_flag == 1)
         {
-            Pad_Config(P10_0, PAD_SW_MODE, PAD_NOT_PWRON, PAD_PULL_DOWN, PAD_OUT_ENABLE, PAD_OUT_LOW);
-            Pad_Config(P2_7, PAD_SW_MODE, PAD_IS_PWRON, PAD_PULL_UP, PAD_OUT_DISABLE, PAD_OUT_HIGH);
+            cap_led_off();
             caps_lock_flag = 0;
         }
         else if(id == HID_USAGE_KEY_KEYPAD_NUM_LOCK_AND_CLEAR && pressed == 1 && num_lock_flag == 0)
         {
-            Pad_Config(P10_0, PAD_SW_MODE, PAD_IS_PWRON, PAD_PULL_DOWN, PAD_OUT_ENABLE, PAD_OUT_HIGH);
-            Pad_Config(MICBIAS, PAD_SW_MODE, PAD_IS_PWRON, PAD_PULL_UP, PAD_OUT_ENABLE, PAD_OUT_LOW);
+            num_led_on();
             num_lock_flag = 1;
         }
         else if(id == HID_USAGE_KEY_KEYPAD_NUM_LOCK_AND_CLEAR && pressed == 1 && num_lock_flag == 1)
         {
-            Pad_Config(P10_0, PAD_SW_MODE, PAD_NOT_PWRON, PAD_PULL_DOWN, PAD_OUT_ENABLE, PAD_OUT_LOW);
-            Pad_Config(MICBIAS, PAD_SW_MODE, PAD_IS_PWRON, PAD_PULL_UP, PAD_OUT_DISABLE, PAD_OUT_HIGH);
+            num_led_off();
             num_lock_flag = 0;
         }
     }

@@ -1,0 +1,15 @@
+identifier: rtl8762gku
+name: rtl8762gku
+type: mcu
+arch: arm
+ram: 96
+flash: 1024
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+supported:
+testing:
+  ignore_tags:
+    - net
+    - bluetooth

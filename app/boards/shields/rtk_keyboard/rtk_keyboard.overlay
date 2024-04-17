@@ -1,5 +1,6 @@
 #include <dt-bindings/zmk/matrix_transform.h>
 #include <dt-bindings/led/led.h>
+#include <zephyr/dt-bindings/gpio/realtek-rtl87x2g-gpio.h>
 
 &gpioa {
     status = "okay";
@@ -72,7 +73,7 @@
         zephyr,resolution = <12>;
     };
 };	
-/ {      	
+/ {
     chosen {
         zmk,kscan = &kscan;
         zmk,matrix-transform = &default_transform;
@@ -99,29 +100,23 @@
             pwms = <&pwm4 0 10000 PWM_POLARITY_NORMAL>;
         };
     };
-	leds {
-        compatible = "gpio-leds-all";
-		led_1: led_1 {
-            cap-gpios = <&gpioa 16 GPIO_ACTIVE_HIGH>;
-        };
-		led_2: led_2 {
-            num-gpios = <&gpioa 28 GPIO_ACTIVE_HIGH>;
-        };
-		led_3: led_3 {
-            ble-gpios = <&gpioa 27 GPIO_ACTIVE_HIGH>;
-        };
-		led_4: led_4 {
-            ppt-gpios = <&gpioa 26 GPIO_ACTIVE_HIGH>;
-        };
-		led_5: led_5 {
-            gpios = <&gpioa 25 GPIO_ACTIVE_HIGH>;
-        };
-		led_6: led_6 {
-            gpios = <&gpioa 24 GPIO_ACTIVE_HIGH>;
-        };
-		led_7: led_7 {
-            gpios = <&gpioa 23 GPIO_ACTIVE_HIGH>;
-        };
+
+    mode_monitor: mode_monitor {
+        compatible = "zmk,mode-monitor-pin";
+        ble-gpios = <&gpioa 9 (GPIO_ACTIVE_HIGH | RTL87X2G_GPIO_INPUT_DEBOUNCE_MS(8))>;
+        ppt-gpios = <&gpioa 8 (GPIO_ACTIVE_HIGH | RTL87X2G_GPIO_INPUT_DEBOUNCE_MS(8))>;
+    };
+
+    gpio_leds: gpio_leds {
+        compatible = "zmk,gpio-leds-all";
+        pwr-gpios = <&gpiob 29 GPIO_ACTIVE_HIGH>;
+        cap-gpios = <&gpioa 16 GPIO_ACTIVE_HIGH>;
+        num-gpios = <&gpioa 28 GPIO_ACTIVE_HIGH>;
+        ble-gpios = <&gpioa 27 GPIO_ACTIVE_HIGH>;
+        ppt-gpios = <&gpioa 26 GPIO_ACTIVE_HIGH>;
+        other-gpios = <&gpioa 25 GPIO_ACTIVE_HIGH>,
+                      <&gpioa 24 GPIO_ACTIVE_HIGH>,
+                      <&gpioa 23 GPIO_ACTIVE_HIGH>;
     };
 
     default_transform: matrix_transform {

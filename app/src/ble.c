@@ -629,7 +629,7 @@ static void zmk_ble_ready(int err) {
     update_advertising();
 }
 
-static int zmk_ble_init(void) {
+int zmk_ble_init(void) {
     int err = bt_enable(NULL);
 
     if (err) {
@@ -647,7 +647,6 @@ static int zmk_ble_init(void) {
     }
 
     k_work_init_delayable(&ble_save_work, ble_save_profile_work);
-
     settings_load_subtree("ble");
     settings_load_subtree("bt");
 
@@ -681,13 +680,17 @@ static int zmk_ble_init(void) {
     }
 
 #endif // IS_ENABLED(CONFIG_ZMK_BLE_CLEAR_BONDS_ON_START)
-
     bt_conn_cb_register(&conn_callbacks);
     bt_conn_auth_cb_register(&zmk_ble_auth_cb_display);
     bt_conn_auth_info_cb_register(&zmk_ble_auth_info_cb_display);
 
     zmk_ble_ready(0);
+    return 0;
+}
 
+int zmk_ble_deinit(void)
+{
+    bt_disable();
     return 0;
 }
 
@@ -775,4 +778,4 @@ ZMK_LISTENER(zmk_ble, zmk_ble_listener);
 ZMK_SUBSCRIPTION(zmk_ble, zmk_keycode_state_changed);
 #endif /* IS_ENABLED(CONFIG_ZMK_BLE_PASSKEY_ENTRY) */
 
-SYS_INIT(zmk_ble_init, APPLICATION, CONFIG_ZMK_BLE_INIT_PRIORITY);
+//SYS_INIT(zmk_ble_init, APPLICATION, CONFIG_ZMK_BLE_INIT_PRIORITY);

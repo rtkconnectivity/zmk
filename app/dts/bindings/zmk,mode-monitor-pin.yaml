@@ -1,0 +1,19 @@
+#
+# Copyright (c) 2019 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+description: |
+    Allows defining the collection of mode monitor pins in ZMK.
+
+compatible: "zmk,mode-monitor-pin"
+
+properties:
+  ble-gpios:
+    type: phandle-array
+    required: true
+
+  ppt-gpios:
+    type: phandle-array
+    required: true
