@@ -17,3 +17,7 @@ properties:
   ppt-gpios:
     type: phandle-array
     required: true
+
+  detect-usb-gpios:
+      type: phandle-array
+      required: true

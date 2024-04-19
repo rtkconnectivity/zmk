@@ -27,3 +27,6 @@ static inline bool zmk_usb_is_powered(void) {
 static inline bool zmk_usb_is_hid_ready(void) {
     return zmk_usb_get_conn_state() == ZMK_USB_CONN_HID;
 }
+
+int zmk_usb_init(void);
+int zmk_usb_deinit(void);

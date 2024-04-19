@@ -1,5 +1,5 @@
-config BOARD_RTL8762GKU
-	bool "RealTek rtl8762gku board"
+config BOARD_RTL8762GTU
+	bool "RealTek rtl8762gtu board"
 	depends on SOC_SERIES_RTL87X2G
-	select SOC_PART_NUMBER_RTL8762GKU
+	select SOC_PART_NUMBER_RTL8762GTU
 

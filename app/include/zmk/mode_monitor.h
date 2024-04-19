@@ -8,6 +8,11 @@
 
 #pragma once
 
+#define GPIO_PIN_LEVEL_LOW   0
+#define GPIO_PIN_LEVEL_HIGH 1
+#define USB_IN_DETECT_NUM 5
+#define USB_OUT_DETECT_NUM 6
+
 enum app_mode_type {
     BT_MODE = 0,
     PPT_MODE,
