@@ -182,7 +182,7 @@ static int zmk_mode_monitor_init(void) {
     gpio_pin_configure_dt(&ppt_led, GPIO_OUTPUT_HIGH);
 
     if (!(gpio_is_ready_dt(&ppt_irq) || gpio_is_ready_dt(&bt_irq))) {
-        LOG_ERR("ppt or ble leds device \"%s\" is not ready");
+        LOG_ERR("ppt or ble leds device is not ready");
         return -ENODEV;
     }
 
@@ -218,7 +218,7 @@ static int zmk_mode_monitor_init(void) {
         LOG_ERR("configure zmk usb cb fail, err:%d ", rc);
     }
     gpio_pin_configure_dt(&detect_usb, GPIO_INPUT);
-    rc = gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_LEVEL_HIGH);//GPIO_INT_EDGE_RISING); 
+    rc = gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_LEVEL_HIGH);
     if (rc != 0) {
         LOG_ERR("configure zmk usb leds fail, err:%d ", rc);
     }
@@ -229,7 +229,7 @@ static int zmk_mode_monitor_init(void) {
 static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
 {
     int usb_pin_polarity_status = gpio_pin_get_raw(detect_usb.port, detect_usb.pin);
-    LOG_DBG("usb_mode_monitor_debounce_timeout_cb: USB insert flag is %d, usb out flagis %d",is_usb_in_debonce_check,is_usb_out_debonce_check);
+
     if(is_usb_in_debonce_check)
     {
         if(usb_pin_polarity_status == GPIO_PIN_LEVEL_HIGH)
@@ -339,4 +339,4 @@ void num_led_off(void)
     gpio_pin_set(num_led.port, num_led.pin, 1);
 }
 
-SYS_INIT(zmk_mode_monitor_init, APPLICATION, 90);//CONFIG_APPLICATION_INIT_PRIORITY);
+SYS_INIT(zmk_mode_monitor_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
