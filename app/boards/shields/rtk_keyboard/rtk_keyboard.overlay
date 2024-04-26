@@ -174,7 +174,10 @@
 			<RTL87X2G_PSEL(KEY_COL_14, P9_1, DIR_OUT, DRV_LOW, PULL_NONE)>,
 			<RTL87X2G_PSEL(KEY_COL_15, P6_4, DIR_OUT, DRV_LOW, PULL_NONE)>,
 			<RTL87X2G_PSEL(KEY_COL_16, P0_2, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_17, P0_1, DIR_OUT, DRV_LOW, PULL_NONE)>,									
+			<RTL87X2G_PSEL(KEY_COL_17, P0_1, DIR_OUT, DRV_LOW, PULL_NONE)>;
+        };
+        group2 {
+            psels =							
             <RTL87X2G_PSEL(KEY_ROW_0, P0_0, DIR_IN, DRV_LOW, PULL_UP)>,
             <RTL87X2G_PSEL(KEY_ROW_1, P1_7, DIR_IN, DRV_LOW, PULL_UP)>,
             <RTL87X2G_PSEL(KEY_ROW_2, P1_5, DIR_IN, DRV_LOW, PULL_UP)>,
@@ -183,7 +186,8 @@
             <RTL87X2G_PSEL(KEY_ROW_5, P3_5, DIR_IN, DRV_LOW, PULL_UP)>,
             <RTL87X2G_PSEL(KEY_ROW_6, P3_4, DIR_IN, DRV_LOW, PULL_UP)>,
             <RTL87X2G_PSEL(KEY_ROW_7, P3_3, DIR_IN, DRV_LOW, PULL_UP)>;
+            bias-pull-strong;
+        };
 
 		};
-        };
 };
