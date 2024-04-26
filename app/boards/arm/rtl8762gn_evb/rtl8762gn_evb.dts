@@ -1,5 +1,5 @@
 /dts-v1/;
-#include <realtek/rtl8762gn_evb.dtsi>
+#include <realtek/rtl87x2g.dtsi>
 #include "rtl8762gn_evb-pinctrl.dtsi"
 
 / {
