@@ -78,7 +78,7 @@
         zmk,kscan = &kscan;
         zmk,matrix-transform = &default_transform;
         zmk,battery = &vbatt;
-        zmk,backlight = &backlight;
+        //zmk,backlight = &backlight;
     };
 
     vbatt: vbatt {
@@ -88,16 +88,16 @@
         full-ohms = <(100000 + 100000)>;
     };
 
-    backlight: pwmleds {
+    battery_pwm_leds: pwmleds {
         compatible = "pwm-leds";
         pwm_led_0 {
-            pwms = <&pwm2 0 10000 PWM_POLARITY_NORMAL>;
+            pwms = <&pwm2 0 10000 PWM_POLARITY_INVERTED>;
         };
         pwm_led_1 {
-            pwms = <&pwm3 0 10000 PWM_POLARITY_NORMAL>;
+            pwms = <&pwm3 0 10000 PWM_POLARITY_INVERTED>;
         };
         pwm_led_2 {
-            pwms = <&pwm4 0 10000 PWM_POLARITY_NORMAL>;
+            pwms = <&pwm4 0 10000 PWM_POLARITY_INVERTED>;
         };
     };
 

@@ -12,6 +12,7 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/logging/log.h>
+#include <zmk/leds_pwm_driver.h>
 
 #include "battery_common.h"
 #include "trace.h"
@@ -86,6 +87,8 @@ static int bvd_sample_fetch(const struct device *dev, enum sensor_channel chan) 
 
         drv_data->value.millivolts = millivolts;
         drv_data->value.state_of_charge = percent;
+
+        led_event_handler(percent);
     } else {
         LOG_DBG("Failed to read ADC: %d", rc);
     }
