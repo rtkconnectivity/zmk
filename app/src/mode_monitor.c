@@ -10,6 +10,10 @@
 #include <zmk/mode_monitor.h>
 #include <zmk/ble.h>
 #include <zmk/usb.h>
+#include <zmk/app_wdt.h>
+#include <zephyr/drivers/watchdog.h>
+//#include <pm.h>
+
 #include "trace.h"
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -41,13 +45,9 @@ static bool is_usb_out_debonce_check = false;
 static bool usb_mode_monitor_trigger_level = GPIO_PIN_LEVEL_HIGH;
 static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer);
 
-static K_TIMER_DEFINE(usb_mode_monitor_timer, usb_mode_monitor_debounce_timeout_cb, NULL);
+static bool is_check_status_before_enter_wfi = true;
 
-typedef struct APP_MODE {
-    bool is_in_bt_mode;
-    bool is_in_usb_mode;
-    bool is_in_ppt_mode;
-} T_APP_MODE;
+static K_TIMER_DEFINE(usb_mode_monitor_timer, usb_mode_monitor_debounce_timeout_cb, NULL);
 
 struct zmk_mode_monitor_msg_processor {
     struct k_work work;
@@ -57,7 +57,7 @@ struct zmk_mode_monitor_event {
     uint8_t app_cur_mode;
     uint8_t state_changed;
 };
-static T_APP_MODE app_mode = {false};
+T_APP_MODE app_mode = {false};
 
 K_MSGQ_DEFINE(zmk_mode_monitor_msgq, sizeof(struct zmk_mode_monitor_event), 4, 4);
 
@@ -141,11 +141,24 @@ static void zmk_mode_monitor_handler(struct k_work *item) {
         {
             if(ev.state_changed == 1)
             {
-                zmk_ble_init();
+                if(app_mode.is_in_usb_mode)
+                {
+                    return;
+                }
+                else
+                {
+                    LOG_DBG("[zmk_mode_monitor_handler]:reset to enter bt mode");
+                    app_system_reset(WDT_FLAG_RESET_SOC);
+                }
             }
             else 
             {
-                zmk_ble_deinit();
+                if(app_mode.is_in_usb_mode)
+                {
+                    return;
+                }
+                LOG_DBG("[zmk_mode_monitor_handler]:reset to exit bt mode");
+                app_system_reset(WDT_FLAG_RESET_SOC);
             }
         }
         else if(ev.app_cur_mode == USB_MODE)
@@ -157,6 +170,11 @@ static void zmk_mode_monitor_handler(struct k_work *item) {
             else
             {
                 zmk_usb_deinit();
+                if(app_mode.is_in_bt_mode)
+                {
+                    LOG_DBG("[zmk_mode_monitor_handler]:reset to exit usb and enter bt mode");
+                    app_system_reset(WDT_FLAG_RESET_SOC);
+                }
             }
         }
         else
@@ -194,7 +212,15 @@ static int zmk_mode_monitor_init(void) {
     }
 
     gpio_pin_configure_dt(&ppt_irq, GPIO_INPUT | GPIO_PULL_UP | PIN_PPT_FLAGS);
-    rc = gpio_pin_interrupt_configure_dt(&ppt_irq, GPIO_INT_LEVEL_LOW);
+    if(!gpio_pin_get_raw(ppt_irq.port,ppt_irq.pin))
+    {
+        gpio_pin_set(ppt_led.port, ppt_led.pin, 0);
+        rc = gpio_pin_interrupt_configure_dt(&ppt_irq, GPIO_INT_LEVEL_HIGH);
+    }
+    else
+    {
+        rc = gpio_pin_interrupt_configure_dt(&ppt_irq, GPIO_INT_LEVEL_LOW);
+    }
     if (rc != 0) {
         LOG_ERR("configure zmk ppt leds fail, err:%d ", rc);
     }
@@ -206,7 +232,16 @@ static int zmk_mode_monitor_init(void) {
         LOG_ERR("configure zmk ble leds fail, err:%d ", rc);
     }
     gpio_pin_configure_dt(&bt_irq, GPIO_INPUT | GPIO_PULL_UP | PIN_BLE_FLAGS);
-    rc = gpio_pin_interrupt_configure_dt(&bt_irq, GPIO_INT_LEVEL_LOW);
+    if(!gpio_pin_get_raw(bt_irq.port,bt_irq.pin))
+    {
+        app_mode.is_in_bt_mode = true;
+        gpio_pin_set(bt_led.port, bt_led.pin, 0);
+        rc = gpio_pin_interrupt_configure_dt(&bt_irq, GPIO_INT_LEVEL_HIGH);
+    }
+    else
+    {
+        rc = gpio_pin_interrupt_configure_dt(&bt_irq, GPIO_INT_LEVEL_LOW);
+    }
     if (rc != 0) {
         LOG_ERR("configure zmk ppt leds fail, err:%d ", rc);
     }
@@ -338,5 +373,33 @@ void num_led_off(void)
 {
     gpio_pin_set(num_led.port, num_led.pin, 1);
 }
+
+/**
+ * @brief  CPU can enter wfi or dlps with checking all module status pass
+ * @param  None
+ * @return None
+ */
+// void pm_check_status_before_enter_wfi_or_dlps(void)
+// {
+//     if (!is_check_status_before_enter_wfi)
+//     {
+//         power_mode_resume();
+//         is_check_status_before_enter_wfi = true;
+//     }
+// }
+
+/**
+ * @brief  CPU enter wfi without checking all module status
+ * @param  None
+ * @return None
+ */
+// void pm_no_check_status_before_enter_wfi(void)
+// {
+//     if (is_check_status_before_enter_wfi)
+//     {
+//         power_mode_pause();
+//         is_check_status_before_enter_wfi = false;
+//     }
+// }
 
 SYS_INIT(zmk_mode_monitor_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);

@@ -13,6 +13,14 @@
 #define USB_IN_DETECT_NUM 5
 #define USB_OUT_DETECT_NUM 6
 
+typedef struct APP_MODE {
+    bool is_in_bt_mode;
+    bool is_in_usb_mode;
+    bool is_in_ppt_mode;
+} T_APP_MODE;
+
+extern T_APP_MODE app_mode;
+
 enum app_mode_type {
     BT_MODE = 0,
     PPT_MODE,
@@ -23,3 +31,6 @@ void cap_led_on(void);
 void cap_led_off(void);
 void num_led_on(void);
 void num_led_off(void);
+
+void pm_check_status_before_enter_wfi_or_dlps(void);
+void pm_no_check_status_before_enter_wfi(void);
