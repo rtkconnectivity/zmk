@@ -157,8 +157,7 @@ static void zmk_mode_monitor_handler(struct k_work *item) {
                 {
                     return;
                 }
-                LOG_DBG("[zmk_mode_monitor_handler]:reset to exit bt mode");
-                app_system_reset(WDT_FLAG_RESET_SOC);
+                LOG_DBG("[zmk_mode_monitor_handler]: exit bt mode");
             }
         }
         else if(ev.app_cur_mode == USB_MODE)
@@ -193,7 +192,7 @@ static int zmk_mode_monitor_init(void) {
 
     /* gpio leds config */
     gpio_pin_interrupt_configure_dt(&leds_pwron, GPIO_INT_DISABLE);
-    gpio_pin_configure_dt(&leds_pwron, GPIO_OUTPUT_HIGH);
+    gpio_pin_configure_dt(&leds_pwron, GPIO_OUTPUT_LOW);
     gpio_pin_configure_dt(&cap_led, GPIO_OUTPUT_HIGH);
     gpio_pin_configure_dt(&num_led, GPIO_OUTPUT_HIGH);
     gpio_pin_configure_dt(&bt_led, GPIO_OUTPUT_HIGH);

@@ -11,10 +11,13 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/led.h>
 #include <zmk/leds_pwm_driver.h>
+#include <zephyr/drivers/gpio.h>
 
 //LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #define LED_PWM_NODE_ID	 DT_COMPAT_GET_ANY_STATUS_OKAY(pwm_leds)
+
+static struct gpio_dt_spec leds_pwron = GPIO_DT_SPEC_GET(DT_NODELABEL(gpio_leds), pwr_gpios);
 
 const char *led_label[] = {
 	DT_FOREACH_CHILD_SEP_VARGS(LED_PWM_NODE_ID, DT_PROP_OR, (,), label, NULL)
@@ -26,10 +29,10 @@ const struct device *led_pwm = DEVICE_DT_GET(LED_PWM_NODE_ID);
 static T_LED_EVENT_STG led_event_arr[LED_TYPE_MAX] =
 {
     {LED_TYPE_IDLE,                    LED_COLOR_IDLE_MASK,   },
-    {LED_TYPE_BLINK_CHARGING,          LED_COLOR_RED_MASK,    }, 
-    {LED_TYPE_BLINK_LOW_POWER,         LED_COLOR_RED_MASK,    },    
+    {LED_TYPE_BLINK_CHARGING,          LED_COLOR_RED_MASK,    },
+    {LED_TYPE_BLINK_LOW_POWER,         LED_COLOR_RED_MASK,    },
     {LED_TYPE_BLINK_MID_POWER,         LED_COLOR_YELLOW_MASK, },
-    {LED_TYPE_BLINK_HIGH_POWER,        LED_COLOR_YELLOW_MASK, },
+    {LED_TYPE_BLINK_HIGH_POWER,        LED_COLOR_GREEN_MASK,  },
 };
 
 void led_event_handler(uint8_t percent)
@@ -77,5 +80,5 @@ void led_event_handler(uint8_t percent)
 	{
 		led_on(led_pwm,2);
 	}
-
+	gpio_pin_configure_dt(&leds_pwron, GPIO_OUTPUT_HIGH);
 }
