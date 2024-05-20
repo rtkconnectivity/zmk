@@ -20,7 +20,7 @@
 #include <zmk/events/usb_conn_state_changed.h>
 #include <zmk/events/ppt_conn_state_changed.h>
 #include <zmk/events/endpoint_changed.h>
-#include <keyboard_ppt_app.h>
+#include <zmk/ppt/keyboard_ppt_app.h>
 #include "trace.h"
 
 #include <zephyr/logging/log.h>

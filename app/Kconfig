@@ -141,7 +141,7 @@ endif
 
 config ZMK_PPT
     bool "Enable ZMK 2.4G"
-    select PPT
+    select REALTEK_PPT
     default n
 
 menuconfig ZMK_BLE

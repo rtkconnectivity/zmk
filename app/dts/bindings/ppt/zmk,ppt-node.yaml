@@ -1,0 +1,15 @@
+# Copyright (c) 2020, The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+description: |
+  RTL87X2G PPT.
+compatible: "zmk,ppt-node"
+
+include: [base.yaml]
+
+properties:
+  enh-timers:
+    type: phandles
+    required: true
+    description: |
+      timer8 and timer9 will be used by ppt.

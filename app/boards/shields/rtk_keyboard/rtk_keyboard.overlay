@@ -40,6 +40,14 @@
     };
 };
 
+&timer8 {
+    status = "okay";
+};
+
+&timer9 {
+    status = "okay";
+};
+
 &corewdt {
 	status = "okay";
     initial-timeout-ms = <5000>;
@@ -118,6 +126,12 @@
         ppt-gpios = <&gpioa 8 (GPIO_ACTIVE_HIGH | RTL87X2G_GPIO_INPUT_DEBOUNCE_MS(8))>;
         detect-usb-gpios = <&gpiob 28 (GPIO_ACTIVE_HIGH | RTL87X2G_GPIO_INPUT_DEBOUNCE_MS(20))>;
     };
+
+	ppt: ppt {
+		compatible = "zmk,ppt-node";
+		enh-timers = <&timer8 &timer9>;
+		status = "okay";
+	};
 
     gpio_leds: gpio_leds {
         compatible = "zmk,gpio-leds-all";

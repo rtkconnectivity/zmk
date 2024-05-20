@@ -15,7 +15,7 @@
 #include <zmk/keymap.h>
 #include <zmk/ppt.h>
 #include <zmk/event_manager.h>
-#include <keyboard_ppt_app.h>
+#include <zmk/ppt/keyboard_ppt_app.h>
 #include "trace.h"
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -58,5 +58,3 @@ int zmk_ppt_send_consumer_report(void) {
     memcpy(&ppt_report[1], report, len);
     return zmk_ppt_send_report(ppt_report, (len+1));
 }
-
-//SYS_INIT(zmk_ppt_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
