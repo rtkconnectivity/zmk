@@ -176,9 +176,16 @@ static void zmk_mode_monitor_handler(struct k_work *item) {
                 }
             }
         }
-        else
+        else if(ev.app_cur_mode == PPT_MODE)
         {
-            return;
+            if(ev.state_changed == 1)
+            {
+                zmk_ppt_init();
+            }
+            else
+            {
+                return;
+            }
         }
     }
     return; 
@@ -213,6 +220,7 @@ static int zmk_mode_monitor_init(void) {
     gpio_pin_configure_dt(&ppt_irq, GPIO_INPUT | GPIO_PULL_UP | PIN_PPT_FLAGS);
     if(!gpio_pin_get_raw(ppt_irq.port,ppt_irq.pin))
     {
+        app_mode.is_in_ppt_mode = true;
         gpio_pin_set(ppt_led.port, ppt_led.pin, 0);
         rc = gpio_pin_interrupt_configure_dt(&ppt_irq, GPIO_INT_LEVEL_HIGH);
     }

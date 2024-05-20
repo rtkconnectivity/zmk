@@ -139,6 +139,10 @@ config USB_HID_POLL_INTERVAL_MS
 #ZMK_USB
 endif
 
+config ZMK_PPT
+    bool "Enable ZMK 2.4G"
+    default n
+
 menuconfig ZMK_BLE
     bool "BLE (HID over GATT)"
     select BT

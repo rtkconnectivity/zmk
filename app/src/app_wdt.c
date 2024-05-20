@@ -31,7 +31,7 @@ void app_system_reset(uint8_t flag)
     wdt_install_timeout(wdt,&wdt_config);
 }
 
-static void app_wdt_init(void)
+static int app_wdt_init(void)
 {
     if(!device_is_ready(wdt))
     {
@@ -43,8 +43,9 @@ static void app_wdt_init(void)
 
 static void app_wdt_timeout_cb(struct k_timer *timer)
 {
-    DBG_DIRECT("watchdog feed");
+    //DBG_DIRECT("watchdog feed");
     wdt_feed(wdt,0);
+    return;
 }
 
 SYS_INIT(app_wdt_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);

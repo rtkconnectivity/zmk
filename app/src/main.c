@@ -16,6 +16,7 @@ LOG_MODULE_REGISTER(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/kscan.h>
 #include <zmk/display.h>
 #include <zmk/mode_monitor.h>
+#include <keyboard_ppt_app.h>
 #include <zmk/ble.h>
 #include <drivers/ext_power.h>
 #include "trace.h"
@@ -30,6 +31,10 @@ int main(void) {
     if(app_mode.is_in_bt_mode && !app_mode.is_in_usb_mode)
     {
         zmk_ble_init();
+    }
+    if(app_mode.is_in_ppt_mode && !app_mode.is_in_usb_mode)
+    {
+        zmk_ppt_init();
     }
 
 #ifdef CONFIG_ZMK_DISPLAY

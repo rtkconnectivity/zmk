@@ -18,7 +18,10 @@
 #include <zmk/event_manager.h>
 #include <zmk/events/ble_active_profile_changed.h>
 #include <zmk/events/usb_conn_state_changed.h>
+#include <zmk/events/ppt_conn_state_changed.h>
 #include <zmk/events/endpoint_changed.h>
+#include <keyboard_ppt_app.h>
+#include "trace.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -59,7 +62,10 @@ bool zmk_endpoint_instance_eq(struct zmk_endpoint_instance a, struct zmk_endpoin
 
     case ZMK_TRANSPORT_BLE:
         return a.ble.profile_index == b.ble.profile_index;
-    }
+
+    case ZMK_TRANSPORT_PPT:
+        return true;
+   }
 
     LOG_ERR("Invalid transport %d", a.transport);
     return false;
@@ -73,6 +79,9 @@ int zmk_endpoint_instance_to_str(struct zmk_endpoint_instance endpoint, char *st
     case ZMK_TRANSPORT_BLE:
         return snprintf(str, len, "BLE:%d", endpoint.ble.profile_index);
 
+    case ZMK_TRANSPORT_PPT:
+        return snprintf(str, len, "PPT");
+
     default:
         return snprintf(str, len, "Invalid");
     }
@@ -80,6 +89,7 @@ int zmk_endpoint_instance_to_str(struct zmk_endpoint_instance endpoint, char *st
 
 #define INSTANCE_INDEX_OFFSET_USB 0
 #define INSTANCE_INDEX_OFFSET_BLE ZMK_ENDPOINT_USB_COUNT
+#define INSTANCE_INDEX_OFFSET_PPT (ZMK_ENDPOINT_USB_COUNT+INSTANCE_INDEX_OFFSET_BLE)
 
 int zmk_endpoint_instance_to_index(struct zmk_endpoint_instance endpoint) {
     switch (endpoint.transport) {
@@ -88,6 +98,9 @@ int zmk_endpoint_instance_to_index(struct zmk_endpoint_instance endpoint) {
 
     case ZMK_TRANSPORT_BLE:
         return INSTANCE_INDEX_OFFSET_BLE + endpoint.ble.profile_index;
+    
+    case ZMK_TRANSPORT_PPT:
+        return INSTANCE_INDEX_OFFSET_PPT;
     }
 
     LOG_ERR("Invalid transport %d", endpoint.transport);
@@ -148,6 +161,19 @@ static int send_keyboard_report(void) {
         return -ENOTSUP;
 #endif /* IS_ENABLED(CONFIG_ZMK_BLE) */
     }
+
+    case ZMK_TRANSPORT_PPT: {
+#if IS_ENABLED(CONFIG_ZMK_PPT)
+        int err = zmk_ppt_send_keyboard_report();
+        if (err) {
+            LOG_ERR("FAILED TO SEND OVER HOG: %d", err);
+        }
+        return err;
+#else
+        LOG_ERR("PPT endpoint is not supported");
+        return -ENOTSUP;
+#endif /* IS_ENABLED(CONFIG_ZMK_PPT) */
+    }
     }
 
     LOG_ERR("Unhandled endpoint transport %d", current_instance.transport);
@@ -182,8 +208,20 @@ static int send_consumer_report(void) {
         return -ENOTSUP;
 #endif /* IS_ENABLED(CONFIG_ZMK_BLE) */
     }
-    }
 
+    case ZMK_TRANSPORT_PPT: {
+#if IS_ENABLED(CONFIG_ZMK_PPT)
+        int err = zmk_ppt_send_consumer_report();
+        if (err) {
+            LOG_ERR("FAILED TO SEND OVER HOG: %d", err);
+        }
+        return err;
+#else
+        LOG_ERR("PPT endpoint is not supported");
+        return -ENOTSUP;
+#endif /* IS_ENABLED(CONFIG_ZMK_BLE) */
+    }
+    }
     LOG_ERR("Unhandled endpoint transport %d", current_instance.transport);
     return -ENOTSUP;
 }
@@ -282,17 +320,33 @@ static bool is_ble_ready(void) {
 #endif
 }
 
+static bool is_ppt_ready(void) {
+#if IS_ENABLED(CONFIG_ZMK_PPT)
+    return zmk_ppt_is_ready();
+#else
+    return false;
+#endif
+}
+
 static enum zmk_transport get_selected_transport(void) {
     if (is_ble_ready()) {
         if (is_usb_ready()) {
-            LOG_DBG("Both endpoint transports are ready. Using %d", preferred_transport);
+            LOG_DBG("Both ble and usb endpoint transports are ready. Using %d", preferred_transport);
             return preferred_transport;
         }
 
         LOG_DBG("Only BLE is ready.");
         return ZMK_TRANSPORT_BLE;
     }
+    if (is_ppt_ready()) {
+        if (is_usb_ready()) {
+            LOG_DBG("Both ppt and usb endpoint transports are ready. Using %d", preferred_transport);
+            return preferred_transport;
+        }
 
+        LOG_DBG("Only ppt is ready.");
+        return ZMK_TRANSPORT_PPT;
+    }
     if (is_usb_ready()) {
         LOG_DBG("Only USB is ready.");
         return ZMK_TRANSPORT_USB;
@@ -379,6 +433,9 @@ ZMK_SUBSCRIPTION(endpoint_listener, zmk_usb_conn_state_changed);
 #endif
 #if IS_ENABLED(CONFIG_ZMK_BLE)
 ZMK_SUBSCRIPTION(endpoint_listener, zmk_ble_active_profile_changed);
+#endif
+#if IS_ENABLED(CONFIG_ZMK_PPT)
+ZMK_SUBSCRIPTION(endpoint_listener, zmk_ppt_conn_state_changed);
 #endif
 
 SYS_INIT(zmk_endpoints_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
