@@ -180,7 +180,9 @@ static void zmk_mode_monitor_handler(struct k_work *item) {
         {
             if(ev.state_changed == 1)
             {
+#if IS_ENABLED(CONFIG_ZMK_PPT)
                 zmk_ppt_init();
+#endif
             }
             else
             {

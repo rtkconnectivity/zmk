@@ -141,8 +141,9 @@ endif
 
 config ZMK_PPT
     bool "Enable ZMK 2.4G"
+    default y
+    depends on DT_HAS_ZMK_PPT_NODE_ENABLED
     select REALTEK_PPT
-    default n
 
 menuconfig ZMK_BLE
     bool "BLE (HID over GATT)"

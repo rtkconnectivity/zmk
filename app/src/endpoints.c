@@ -20,7 +20,9 @@
 #include <zmk/events/usb_conn_state_changed.h>
 #include <zmk/events/ppt_conn_state_changed.h>
 #include <zmk/events/endpoint_changed.h>
+#if IS_ENABLED(CONFIG_ZMK_PPT)
 #include <zmk/ppt/keyboard_ppt_app.h>
+#endif
 #include "trace.h"
 
 #include <zephyr/logging/log.h>

@@ -429,12 +429,8 @@ enum zmk_ppt_conn_state zmk_ppt_get_conn_state(void) {
 
 void zmk_ppt_init(void)
 {
-#if DT_NODE_HAS_STATUS(DT_INST(0, zmk_ppt_node), okay)
     DBG_DIRECT("zmk ppt init and start pair");
     keyboard_ppt_init();
     keyboard_ppt_enable();
     keyboard_ppt_pair();
-#else
-    DBG_DIRECT("err :not find ppt node in device tree!");
-#endif
 }

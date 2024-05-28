@@ -16,10 +16,12 @@ LOG_MODULE_REGISTER(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/kscan.h>
 #include <zmk/display.h>
 #include <zmk/mode_monitor.h>
-#include <zmk/ppt/keyboard_ppt_app.h>
 #include <zmk/ble.h>
 #include <drivers/ext_power.h>
 #include "trace.h"
+#if IS_ENABLED(CONFIG_ZMK_PPT)
+#include <zmk/ppt/keyboard_ppt_app.h>
+#endif
 
 int main(void) {
     LOG_INF("Welcome to ZMK!\n");
@@ -32,10 +34,12 @@ int main(void) {
     {
         zmk_ble_init();
     }
+#if IS_ENABLED(CONFIG_ZMK_PPT)
     if(app_mode.is_in_ppt_mode && !app_mode.is_in_usb_mode)
     {
         zmk_ppt_init();
     }
+#endif
 
 #ifdef CONFIG_ZMK_DISPLAY
     zmk_display_init();
