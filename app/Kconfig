@@ -243,6 +243,10 @@ config BT_PERIPHERAL_PREF_LATENCY
 
 config BT_PERIPHERAL_PREF_TIMEOUT
     default 400
+    
+config BT_SUPPORT_STATIC_RANDOM_ADDRESS
+    bool "generate static random address when pairing"
+    default n
 
 #ZMK_BLE
 endif
