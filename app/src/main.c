@@ -23,8 +23,23 @@ LOG_MODULE_REGISTER(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/ppt/keyboard_ppt_app.h>
 #endif
 
+#if CONFIG_PM
+#include "power_manager_unit_platform.h"
+enum PMCheckResult app_enter_dlps_check(void) {
+    DBG_DIRECT("app check dlps flag %d", app_global_data.is_app_enabled_dlps);
+    return app_global_data.is_app_enabled_dlps ? PM_CHECK_PASS : PM_CHECK_FAIL;
+}
+static void app_dlps_check_cb_register(void) {
+    platform_pm_register_callback_func((void *)app_enter_dlps_check, PLATFORM_PM_CHECK);
+}
+#endif
+
 int main(void) {
     LOG_INF("Welcome to ZMK!\n");
+
+#if CONFIG_PM
+    app_dlps_check_cb_register();
+#endif
 
     if (zmk_kscan_init(DEVICE_DT_GET(ZMK_MATRIX_NODE_ID)) != 0) {
         return -ENOTSUP;

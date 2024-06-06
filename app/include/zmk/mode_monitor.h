@@ -19,7 +19,12 @@ typedef struct APP_MODE {
     bool is_in_ppt_mode;
 } T_APP_MODE;
 
+typedef struct APP_GLOBAL_DATA {
+    bool is_app_enabled_dlps;
+} T_APP_GLOBAL_DATA;
+
 extern T_APP_MODE app_mode;
+extern T_APP_GLOBAL_DATA app_global_data;
 
 enum app_mode_type {
     BT_MODE = 0,

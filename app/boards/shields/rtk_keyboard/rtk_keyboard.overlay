@@ -136,8 +136,8 @@
     gpio_leds: gpio_leds {
         compatible = "zmk,gpio-leds-all";
         pwr-gpios = <&gpiob 29 GPIO_ACTIVE_HIGH>;
-        cap-gpios = <&gpioa 16 GPIO_ACTIVE_HIGH>;
-        num-gpios = <&gpioa 28 GPIO_ACTIVE_HIGH>;
+        cap-gpios = <&gpioa 28 GPIO_ACTIVE_HIGH>;
+        num-gpios = <&gpioa 16 GPIO_ACTIVE_HIGH>;
         ble-gpios = <&gpioa 27 GPIO_ACTIVE_HIGH>;
         ppt-gpios = <&gpioa 26 GPIO_ACTIVE_HIGH>;
         other-gpios = <&gpioa 25 GPIO_ACTIVE_HIGH>,
@@ -164,7 +164,8 @@
 
 &kscan {
     pinctrl-0 = <&kscan_default>;
-    pinctrl-names = "default";
+    pinctrl-1 = <&kscan_sleep>;
+    pinctrl-names = "default", "sleep";
     row-size = <8>;
     col-size = <18>;
     debounce-time-us = <10000>;
@@ -182,27 +183,28 @@
     };
     kscan_default: kscan_default {
         group1 {
-            psels = <RTL87X2G_PSEL(KEY_COL_0, P0_4, DIR_OUT, DRV_LOW, PULL_NONE)>,
-            <RTL87X2G_PSEL(KEY_COL_1, P4_3, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_2, P4_2, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_3, P4_1, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_4, P4_0, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_5, P0_6, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_6, P0_5, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_7, P9_0, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_8, P6_7, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_9, P1_2, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_10, P6_5, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_11, P6_3, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_12, P6_2, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_13, P6_1, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_14, P9_1, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_15, P6_4, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_16, P0_2, DIR_OUT, DRV_LOW, PULL_NONE)>,
-			<RTL87X2G_PSEL(KEY_COL_17, P0_1, DIR_OUT, DRV_LOW, PULL_NONE)>;
+            psels =
+            <RTL87X2G_PSEL(KEY_COL_0,  P0_4, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_1,  P4_3, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_2,  P4_2, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_3,  P4_1, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_4,  P4_0, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_5,  P0_6, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_6,  P0_5, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_7,  P9_0, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_8,  P6_7, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_9,  P1_2, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_10, P6_5, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_11, P6_3, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_12, P6_2, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_13, P6_1, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_14, P9_1, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_15, P6_4, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_16, P0_2, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL87X2G_PSEL(KEY_COL_17, P0_1, DIR_OUT, DRV_LOW, PULL_NONE)>;
         };
         group2 {
-            psels =							
+            psels =
             <RTL87X2G_PSEL(KEY_ROW_0, P0_0, DIR_IN, DRV_LOW, PULL_UP)>,
             <RTL87X2G_PSEL(KEY_ROW_1, P1_7, DIR_IN, DRV_LOW, PULL_UP)>,
             <RTL87X2G_PSEL(KEY_ROW_2, P1_5, DIR_IN, DRV_LOW, PULL_UP)>,
@@ -213,6 +215,41 @@
             <RTL87X2G_PSEL(KEY_ROW_7, P3_3, DIR_IN, DRV_LOW, PULL_UP)>;
             bias-pull-strong;
         };
-
 		};
+    kscan_sleep: kscan_sleep {
+        group1 {
+            psels =
+            <RTL87X2G_PSEL(SW_MODE, P0_4, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P4_3, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P4_2, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P4_1, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P4_0, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P0_6, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P0_5, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P9_0, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P6_7, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P1_2, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P6_5, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P6_3, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P6_2, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P6_1, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P9_1, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P6_4, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P0_2, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL87X2G_PSEL(SW_MODE, P0_1, DIR_OUT, DRV_LOW, PULL_DOWN)>;
+        };
+        group2 {
+            psels =
+            <RTL87X2G_PSEL(SW_MODE, P0_0, DIR_IN, DRV_HIGH, PULL_UP)>,
+            <RTL87X2G_PSEL(SW_MODE, P1_7, DIR_IN, DRV_HIGH, PULL_UP)>,
+            <RTL87X2G_PSEL(SW_MODE, P1_5, DIR_IN, DRV_HIGH, PULL_UP)>,
+            <RTL87X2G_PSEL(SW_MODE, P3_7, DIR_IN, DRV_HIGH, PULL_UP)>,
+            <RTL87X2G_PSEL(SW_MODE, P3_6, DIR_IN, DRV_HIGH, PULL_UP)>,
+            <RTL87X2G_PSEL(SW_MODE, P3_5, DIR_IN, DRV_HIGH, PULL_UP)>,
+            <RTL87X2G_PSEL(SW_MODE, P3_4, DIR_IN, DRV_HIGH, PULL_UP)>,
+            <RTL87X2G_PSEL(SW_MODE, P3_3, DIR_IN, DRV_HIGH, PULL_UP)>;
+            bias-pull-strong;
+            wakeup-low;
+        };
+        };
 };

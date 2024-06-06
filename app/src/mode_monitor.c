@@ -12,7 +12,9 @@
 #include <zmk/usb.h>
 #include <zmk/app_wdt.h>
 #include <zephyr/drivers/watchdog.h>
-//#include <pm.h>
+#if IS_ENABLED(CONFIG_PM)
+#include <pm.h>
+#endif
 
 #include "trace.h"
 
@@ -58,6 +60,7 @@ struct zmk_mode_monitor_event {
     uint8_t state_changed;
 };
 T_APP_MODE app_mode = {false};
+T_APP_GLOBAL_DATA app_global_data = {.is_app_enabled_dlps = true};
 
 K_MSGQ_DEFINE(zmk_mode_monitor_msgq, sizeof(struct zmk_mode_monitor_event), 4, 4);
 
@@ -276,6 +279,7 @@ static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
 
     if(is_usb_in_debonce_check)
     {
+        app_global_data.is_app_enabled_dlps = false;
         if(usb_pin_polarity_status == GPIO_PIN_LEVEL_HIGH)
         {
             LOG_DBG("[usb_mode_monitor_debounce_timeout_cb]: usb_in_high_vol is %d",usb_in_high_vol_num);
@@ -287,7 +291,7 @@ static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
                 is_usb_in_debonce_check = false;
                 gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_LEVEL_LOW);
                 usb_mode_monitor_trigger_level = GPIO_PIN_LEVEL_LOW;
-                
+ 
                 struct zmk_mode_monitor_event ev = {
                     .app_cur_mode = USB_MODE,
                     .state_changed = 1
@@ -295,6 +299,7 @@ static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
                 k_msgq_put(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT);
                 k_work_submit(&mm_msg_processor.work);
                 app_mode.is_in_usb_mode = true;
+                app_global_data.is_app_enabled_dlps = true;
                 return;
             }
         }
@@ -325,6 +330,7 @@ static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
     }
     else if(is_usb_out_debonce_check)
     {
+        app_global_data.is_app_enabled_dlps = false;
         if(usb_pin_polarity_status == GPIO_PIN_LEVEL_LOW)
         {
             LOG_DBG("[usb_mode_monitor_debounce_timeout_cb]: usb_out_low_vol is %d",usb_out_low_vol_num);
@@ -342,6 +348,7 @@ static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
                 };
                 k_msgq_put(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT);
                 k_work_submit(&mm_msg_processor.work);
+                app_global_data.is_app_enabled_dlps = true;
                 return;
             }
         }
@@ -383,32 +390,34 @@ void num_led_off(void)
     gpio_pin_set(num_led.port, num_led.pin, 1);
 }
 
+#if IS_ENABLED(CONFIG_PM)
 /**
  * @brief  CPU can enter wfi or dlps with checking all module status pass
  * @param  None
  * @return None
  */
-// void pm_check_status_before_enter_wfi_or_dlps(void)
-// {
-//     if (!is_check_status_before_enter_wfi)
-//     {
-//         power_mode_resume();
-//         is_check_status_before_enter_wfi = true;
-//     }
-// }
+void pm_check_status_before_enter_wfi_or_dlps(void)
+{
+    if (!is_check_status_before_enter_wfi)
+    {
+        power_mode_resume();
+        is_check_status_before_enter_wfi = true;
+    }
+}
 
 /**
  * @brief  CPU enter wfi without checking all module status
  * @param  None
  * @return None
  */
-// void pm_no_check_status_before_enter_wfi(void)
-// {
-//     if (is_check_status_before_enter_wfi)
-//     {
-//         power_mode_pause();
-//         is_check_status_before_enter_wfi = false;
-//     }
-// }
+void pm_no_check_status_before_enter_wfi(void)
+{
+    if (is_check_status_before_enter_wfi)
+    {
+        power_mode_pause();
+        is_check_status_before_enter_wfi = false;
+    }
+}
+#endif
 
 SYS_INIT(zmk_mode_monitor_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);

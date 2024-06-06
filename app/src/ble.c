@@ -432,6 +432,7 @@ static int ble_profiles_handle_set(const char *name, size_t len, settings_read_c
             return err;
         }
     }
+#if IS_ENABLED(CONFIG_BT_SUPPORT_STATIC_RANDOM_ADDRESS)
     else if(settings_name_steq(name,"address",&next) && next)
     {
         char *endptr;
@@ -458,6 +459,7 @@ static int ble_profiles_handle_set(const char *name, size_t len, settings_read_c
 
         LOG_DBG("Loaded %s address for profile %d", addr_str, idx);
     }
+#endif
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
     else if (settings_name_steq(name, "peripheral_addresses", &next) && next) {
         if (len != sizeof(bt_addr_le_t)) {
