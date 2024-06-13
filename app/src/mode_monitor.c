@@ -420,4 +420,4 @@ void pm_no_check_status_before_enter_wfi(void)
 }
 #endif
 
-SYS_INIT(zmk_mode_monitor_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+//SYS_INIT(zmk_mode_monitor_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);

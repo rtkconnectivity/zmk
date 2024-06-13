@@ -63,7 +63,7 @@ enum advertising_type {
 #define CURR_ADV(adv) (adv << 4)
 
 #define ZMK_ADV_CONN_NAME                                                                          \
-    BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME, BT_GAP_ADV_FAST_INT_MIN_2, \
+    BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_USE_IDENTITY, BT_GAP_ADV_FAST_INT_MIN_2, \
                     BT_GAP_ADV_FAST_INT_MAX_2, NULL)
 
 static struct zmk_ble_profile profiles[ZMK_BLE_PROFILE_COUNT];
@@ -841,6 +841,8 @@ static void zmk_check_profile_exist_static_random_addr(bool need_gen_new_addr)
 		    !BT_ADDR_IS_STATIC(&static_addr[active_profile].a)))
     {
         bt_addr_le_create_static(&static_addr[active_profile]);
+        bt_addr_le_to_str(&static_addr[active_profile], addr_str, sizeof(addr_str));
+        LOG_DBG("generate new static random addr %s",addr_str);
         char settings_name[16];
         sprintf(settings_name, "ble/address/%d", active_profile);
         settings_save_one(settings_name, &static_addr[active_profile], sizeof(bt_addr_le_t));
@@ -854,4 +856,4 @@ static void zmk_check_profile_exist_static_random_addr(bool need_gen_new_addr)
     }
 }
 #endif
-//SYS_INIT(zmk_ble_init, APPLICATION, CONFIG_ZMK_BLE_INIT_PRIORITY);
+SYS_INIT(zmk_ble_init, APPLICATION, CONFIG_ZMK_BLE_INIT_PRIORITY);

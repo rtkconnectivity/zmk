@@ -1,0 +1,5 @@
+config BOARD_RTL8772GWP
+	bool "RealTek rtl8772gwp board"
+	depends on SOC_SERIES_RTL87X2G
+	select SOC_PART_NUMBER_RTL8772GWP
+

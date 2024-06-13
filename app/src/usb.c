@@ -108,4 +108,4 @@ int zmk_usb_deinit(void)
     return 0;
 }
 
-SYS_INIT(zmk_usb_init, APPLICATION, CONFIG_ZMK_USB_INIT_PRIORITY);
+//SYS_INIT(zmk_usb_init, APPLICATION, CONFIG_ZMK_USB_INIT_PRIORITY);

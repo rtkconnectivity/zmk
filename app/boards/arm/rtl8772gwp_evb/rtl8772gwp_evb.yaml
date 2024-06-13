@@ -1,0 +1,15 @@
+identifier: rtl8772gwp
+name: rtl8772gwp
+type: mcu
+arch: arm
+ram: 96
+flash: 1024
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+supported:
+testing:
+  ignore_tags:
+    - net
+    - bluetooth

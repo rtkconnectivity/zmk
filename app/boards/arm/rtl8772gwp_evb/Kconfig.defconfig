@@ -1,0 +1,6 @@
+if BOARD_RTL8772GWP
+
+config BOARD
+	default "rtl8772gwp"
+
+endif #BOARD_RTL8772GWP

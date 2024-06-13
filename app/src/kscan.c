@@ -43,6 +43,7 @@ static void zmk_kscan_callback(const struct device *dev, uint32_t row, uint32_t 
        when the scan interval of keyscan is set <100us, it may result in unstable interrupt intervals
        in this case we can skip check before wfi/dlps
      */
+#if IS_ENABLED(CONFIG_PM)
     if(pressed)
     {
         key_press_num++;
@@ -59,6 +60,7 @@ static void zmk_kscan_callback(const struct device *dev, uint32_t row, uint32_t 
             pm_check_status_before_enter_wfi_or_dlps();
         }
     }
+#endif
     struct zmk_kscan_event ev = {
         .row = row,
         .column = column,
