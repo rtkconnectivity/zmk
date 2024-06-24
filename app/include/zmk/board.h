@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 
-#define DLPS_EN             0
+#define ENABLE_2_4G_LOG     0
 
-#define ENABLE_2_4G_LOG     1
+#define PPT_PAIR_RSSI       -65
+#define FEATURE_SUPPORT_PROPRIETARY_TRANSPORT   0

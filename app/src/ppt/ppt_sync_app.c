@@ -7,12 +7,17 @@
 #include <trace.h>
 #include <zmk/ppt/ppt_sync_app.h>
 #include <zephyr/logging/log.h>
+#include <zmk/mode_monitor.h>
+#include <rtl_enh_tim.h>
+#include "power_manager_unit_platform.h"
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 /*============================================================================*
  *                              Variables
  *============================================================================*/
 static ppt_sync_app_t ppt_sync_app;
+
+volatile ENHTIMStoreReg_Typedef ENHTIM_StoreReg;
 
 /*============================================================================*
 *                               Functions Declaration
@@ -41,6 +46,31 @@ void sync_msg_reg_send_cb(sync_msg_send_cb_t cb)
     ppt_sync_app.msg_send_cb = cb;
 }
 
+#ifdef CONFIG_PM_DEVICE
+
+extern void ENHTIM_DLPSEnter(void *PeriReg, void *StoreBuf);
+extern void ENHTIM_DLPSExit(void *PeriReg, void *StoreBuf);
+
+static int sync_entim_enter_dlps_cb()
+{
+    ENHTIM_DLPSEnter(ENH_TIM0, (void *)&ENHTIM_StoreReg);
+    return 0;
+}
+static int sync_entim_exit_dlps_cb()
+{
+    ENHTIM_DLPSExit(ENH_TIM0, (void *)&ENHTIM_StoreReg);
+    return 0;
+}
+
+static void sync_entim_dlps_init()
+{
+    /* 2.4g need ensure the entimer restore early than 2.4g restore, and 2.4g restore is in platform
+    pend stage, so we register entimer restore to platform restore stage which has higher priority than
+    pend stage */
+    platform_pm_register_callback_func((void *)sync_entim_enter_dlps_cb, PLATFORM_PM_STORE);
+    platform_pm_register_callback_func((void *)sync_entim_exit_dlps_cb, PLATFORM_PM_RESTORE);
+}
+#endif
 /**
  * @brief  Initialize 2.4g proprietary
  * @param  role - 2.4g role, master or slave
@@ -51,8 +81,10 @@ void ppt_sync_init(sync_role_t role)
     DBG_DIRECT("ppt_sync_init");
     memset(&ppt_sync_app, 0, sizeof(ppt_sync_app));
     sync_init(role);
-#if DLPS_EN
+
+#ifdef CONFIG_PM_DEVICE
     sync_dlps_init();
+    sync_entim_dlps_init();
 #endif
 }
 
@@ -169,6 +201,7 @@ bool ppt_clear_bond_info(void)
 sync_err_code_t ppt_app_send_data(sync_msg_type_t type, uint8_t msg_retrans_count,
                                   uint8_t *data, uint16_t len)
 {
+    DBG_DIRECT("ppt app send data");
     if (type == SYNC_MSG_TYPE_DYNAMIC_RETRANS)
     {
         return sync_msg_send(SYNC_MSG_TYPE_DYNAMIC_RETRANS, data, len, ppt_sync_app.msg_send_cb);

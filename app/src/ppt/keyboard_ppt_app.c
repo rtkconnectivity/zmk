@@ -20,9 +20,10 @@
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
+#if FEATURE_SUPPORT_NO_ACTION_DISCONN
 static void no_act_disconn_timer_callback(struct k_timer *p_timer);
 static K_TIMER_DEFINE(no_act_disconn_timer, no_act_disconn_timer_callback, NULL);
-
+#endif
 /*============================================================================*
  *                             Macro
  *============================================================================*/
@@ -231,6 +232,19 @@ void keyboard_ppt_stop_sync(void)
 }
 
 /******************************************************************
+ * @brief  keyboard_ppt_set_sync_interval
+ * @param  none
+ * @return none
+ * @retval void
+ */
+void keyboard_ppt_set_sync_interval(void)
+{
+    uint32_t ppt_interval_time_us = PPT_REPORT_RATE_LEVEL_0;
+    sync_time_set(SYNC_TIME_PARAM_CONNECT_INTERVAL, ppt_interval_time_us);
+    sync_time_set(SYNC_TIME_PARAM_CONNECT_INTERVAL_HIGH, ppt_interval_time_us);
+}
+
+/******************************************************************
  * @brief  keyboard_ppt_init
  * @param  none
  * @return none
@@ -245,10 +259,11 @@ void keyboard_ppt_init(void)
     ppt_app_global_data.keyboard_ppt_status = KEYBOARD_PPT_STATUS_IDLE;
     ppt_app_global_data.is_ppt_bond = ppt_check_is_bonded();
     DBG_DIRECT("ppt_app_global_data.is_ppt_bond = %d", ppt_app_global_data.is_ppt_bond);
-    uint32_t ppt_interval_time_us = PPT_REPORT_RATE_LEVEL_0 ;
+
+    sync_pair_rssi_set(PPT_PAIR_RSSI);
+
     /* set 2.4g connection interval */
-    sync_time_set(SYNC_TIME_PARAM_CONNECT_INTERVAL, ppt_interval_time_us);
-    DBG_DIRECT("ppt_interval_time_us = %d us", ppt_interval_time_us);
+    keyboard_ppt_set_sync_interval();
 
     /* set 2.4g connection heart beat interval */
     sync_master_set_hb_param(2, PPT_DEFAULT_HEARTBEAT_INTERVAL_TIME, 0);
@@ -263,8 +278,9 @@ void keyboard_ppt_init(void)
 
 #if !ENABLE_2_4G_LOG
     sync_log_set(0, false);
+#else
+    sync_log_set(0, true);
 #endif
-    sync_log_set(0,true);
 }
 
 /******************************************************************

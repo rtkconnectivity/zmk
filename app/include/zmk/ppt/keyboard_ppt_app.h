@@ -88,6 +88,7 @@ void keyboard_ppt_enable(void);
 void keyboard_ppt_pair(void);
 void keyboard_ppt_reconnect(void);
 void keyboard_ppt_stop_sync(void);
+void keyboard_ppt_set_sync_interval(void);
 bool keyboard_app_ppt_send_data(sync_msg_type_t type, uint8_t msg_retrans_count,
                                 T_KEYBOARD_DATA keyboard_data);
 enum zmk_ppt_conn_state zmk_ppt_get_conn_state(void);
