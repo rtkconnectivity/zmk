@@ -209,10 +209,10 @@ int update_advertising(void) {
         CHECKED_DIR_ADV();
         break;
     case ZMK_ADV_CONN + CURR_ADV(ZMK_ADV_DIR):
-        CHECKED_ADV_STOP();
+        CHECKED_ADV_STOP();        
         CHECKED_OPEN_ADV();
         break;
-    case ZMK_ADV_CONN + CURR_ADV(ZMK_ADV_NONE):
+    case ZMK_ADV_CONN + CURR_ADV(ZMK_ADV_NONE):     
         CHECKED_OPEN_ADV();
         break;
     }
@@ -233,12 +233,15 @@ static void clear_profile_bond(uint8_t profile) {
 
 void zmk_ble_clear_bonds(void) {
     LOG_DBG("zmk_ble_clear_bonds()");
+    int err = 0;
 
     clear_profile_bond(active_profile);
 #if IS_ENABLED(CONFIG_BT_SUPPORT_STATIC_RANDOM_ADDRESS)
     zmk_check_profile_exist_static_random_addr(true);
 #endif
-    update_advertising();
+    CHECKED_ADV_STOP();
+    CHECKED_OPEN_ADV();
+    //update_advertising();
 };
 
 void zmk_ble_clear_all_bonds(void) {
@@ -536,7 +539,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     // We need to do this in a work callback, otherwise the advertising update will still see the
     // connection for a profile as active, and not start advertising yet.
-    k_work_submit(&update_advertising_work);
+    //k_work_submit(&update_advertising_work); //test mac try to reconnect or not
 
     if (is_conn_active_profile(conn)) {
         LOG_DBG("Active profile disconnected");
@@ -846,7 +849,7 @@ static void zmk_check_profile_exist_static_random_addr(bool need_gen_new_addr)
         char settings_name[16];
         sprintf(settings_name, "ble/address/%d", active_profile);
         settings_save_one(settings_name, &static_addr[active_profile], sizeof(bt_addr_le_t));
-        LOG_DBG("cur profile %d has not generated static random addr ",active_profile);
+        LOG_DBG("cur profile %d generated new static random addr ",active_profile);
         memcpy(&bt_dev.id_addr[0], &static_addr[active_profile], sizeof(bt_addr_le_t));
     }
     else

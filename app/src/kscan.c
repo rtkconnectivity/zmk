@@ -36,6 +36,7 @@ static uint8_t key_press_num = 0;
 
 #include "rtl_pinmux.h"
 #include "trace.h"
+#include <zmk/ble.h>
 static void zmk_kscan_callback(const struct device *dev, uint32_t row, uint32_t column,
                                bool pressed) {
     LOG_DBG("keyscan callback: row,col is (%d %d)",row,column);
@@ -84,7 +85,11 @@ void zmk_kscan_process_msgq(struct k_work *item) {
         }
 
         LOG_DBG("Row: %d, col: %d, position: %d, pressed: %s", ev.row, ev.column, position,
-                (pressed ? "true" : "false"));      
+                (pressed ? "true" : "false"));
+        if(zmk_ble_active_profile_is_connected() == false)
+        {
+            update_advertising();
+        }
         raise_zmk_position_state_changed(
             (struct zmk_position_state_changed){.source = ZMK_POSITION_STATE_CHANGE_SOURCE_LOCAL,
                                                 .state = pressed,
