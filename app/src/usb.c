@@ -18,6 +18,7 @@
 #include <zephyr/drivers/gpio.h>
 
 #include <zmk/usb_hid.h>
+#include <zmk/mode_monitor.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -68,6 +69,10 @@ void usb_status_cb(enum usb_dc_status_code status, const uint8_t *params) {
     }
 #endif
     usb_status = status;
+    if(status == USB_DC_CONFIGURED)
+    {
+        app_global_data.is_usb_enumeration_success = true;
+    }
     k_work_submit(&usb_status_notifier_work);
 };
 
@@ -89,6 +94,7 @@ int zmk_usb_init(void) {
 
     if (usb_enable_ret != 0) {
         LOG_ERR("Unable to enable USB ,err = %d",usb_enable_ret);
+        app_mode.is_in_usb_mode = false;
         return -EINVAL;
     }
 

@@ -36,9 +36,10 @@ static int app_wdt_init(void)
     if(!device_is_ready(wdt))
     {
         LOG_DBG("%s:device not ready",wdt->name);
-        return 0;
+        return 1;
     }
     k_timer_start(&app_wdt_timer, K_MSEC(4000),K_MSEC(4000));
+    return 0;
 }
 
 static void app_wdt_timeout_cb(struct k_timer *timer)

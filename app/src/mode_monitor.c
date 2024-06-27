@@ -12,6 +12,8 @@
 #include <zmk/usb.h>
 #include <zmk/app_wdt.h>
 #include <zephyr/drivers/watchdog.h>
+#include <zmk/ppt/keyboard_ppt_app.h>
+#include <zmk/keymap.h>
 #if IS_ENABLED(CONFIG_PM)
 #include <pm.h>
 #endif
@@ -27,6 +29,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 static struct gpio_dt_spec ppt_irq = GPIO_DT_SPEC_GET(DT_NODELABEL(mode_monitor), ppt_gpios);
 static struct gpio_dt_spec bt_irq = GPIO_DT_SPEC_GET(DT_NODELABEL(mode_monitor), ble_gpios);
 static struct gpio_dt_spec detect_usb = GPIO_DT_SPEC_GET(DT_NODELABEL(mode_monitor), detect_usb_gpios);
+static struct gpio_dt_spec win2mac = GPIO_DT_SPEC_GET(DT_NODELABEL(mode_monitor), win2mac_gpios);
 
 static struct gpio_dt_spec leds_pwron = GPIO_DT_SPEC_GET(DT_NODELABEL(gpio_leds), pwr_gpios);
 static struct gpio_dt_spec cap_led = GPIO_DT_SPEC_GET(DT_NODELABEL(gpio_leds), cap_gpios);
@@ -60,14 +63,15 @@ struct zmk_mode_monitor_event {
     uint8_t state_changed;
 };
 T_APP_MODE app_mode = {false};
-T_APP_GLOBAL_DATA app_global_data = {.is_app_enabled_dlps = true};
+T_APP_GLOBAL_DATA app_global_data = {.is_app_enabled_dlps = true, .is_usb_enumeration_success = false};
 
 K_MSGQ_DEFINE(zmk_mode_monitor_msgq, sizeof(struct zmk_mode_monitor_event), 4, 4);
 
 static void zmk_mode_monitor_callback(const struct device *dev, struct gpio_callback *gpio_cb,
                                       uint32_t pins) {
-    LOG_DBG("zmk_mode_monitor_callback,pin is %d(256-(2.4G)P1_0, 512(BLE)-P1_1)", pins);
-    if (pins == 256) {
+    LOG_DBG("zmk_mode_monitor_callback, pins is %u,", pins);
+
+    if ((!strcmp(dev->name,ppt_irq.port->name)) && (pins >> ppt_irq.pin == 1)) {
         if (app_mode.is_in_ppt_mode == false) {
             gpio_pin_interrupt_configure_dt(&ppt_irq, GPIO_INT_LEVEL_HIGH);
             gpio_pin_set(ppt_led.port, ppt_led.pin, 0);
@@ -91,7 +95,7 @@ static void zmk_mode_monitor_callback(const struct device *dev, struct gpio_call
             k_msgq_put(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT);
             k_work_submit(&mm_msg_processor.work);
         }
-    } else if (pins == 512) {
+    } else if ((!strcmp(dev->name,bt_irq.port->name)) && (pins >> bt_irq.pin == 1)) {
         if (app_mode.is_in_bt_mode == false) {
             gpio_pin_interrupt_configure_dt(&bt_irq, GPIO_INT_LEVEL_HIGH);
             gpio_pin_set(bt_led.port, bt_led.pin, 0);
@@ -116,7 +120,25 @@ static void zmk_mode_monitor_callback(const struct device *dev, struct gpio_call
             k_work_submit(&mm_msg_processor.work);
         }
     }
-    else
+    else if((!strcmp(dev->name,win2mac.port->name)) && (pins >> win2mac.pin == 1))
+    {
+        LOG_DBG("gpio callback win2macos");
+        if(!gpio_pin_get_raw(win2mac.port,win2mac.pin) && app_mode.is_in_macos)
+        {
+            LOG_DBG("gpio_pin_get_raw win2mac low, set to windows");
+            keyboard_switch_os();
+            app_mode.is_in_windows = true;
+            gpio_pin_interrupt_configure_dt(&win2mac, GPIO_INT_LEVEL_HIGH);
+        }
+        else if(gpio_pin_get_raw(win2mac.port,win2mac.pin) && app_mode.is_in_windows)
+        {
+            LOG_DBG("gpio_pin_get_raw win2mac low, set to macos");
+            keyboard_switch_os();
+            app_mode.is_in_macos = true;
+            gpio_pin_interrupt_configure_dt(&win2mac, GPIO_INT_LEVEL_LOW);
+        }
+    }
+    else if((!strcmp(dev->name,detect_usb.port->name)) && (pins >> detect_usb.pin == 1))
     {
         gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_DISABLE);
         
@@ -144,7 +166,7 @@ static void zmk_mode_monitor_handler(struct k_work *item) {
         {
             if(ev.state_changed == 1)
             {
-                if(app_mode.is_in_usb_mode)
+                if(app_mode.is_in_usb_mode && app_global_data.is_usb_enumeration_success)
                 {
                     return;
                 }
@@ -156,11 +178,12 @@ static void zmk_mode_monitor_handler(struct k_work *item) {
             }
             else 
             {
-                if(app_mode.is_in_usb_mode)
+                if(app_mode.is_in_usb_mode && app_global_data.is_usb_enumeration_success)
                 {
                     return;
                 }
                 LOG_DBG("[zmk_mode_monitor_handler]: exit bt mode");
+                app_system_reset(WDT_FLAG_RESET_SOC);
             }
         }
         else if(ev.app_cur_mode == USB_MODE)
@@ -172,9 +195,9 @@ static void zmk_mode_monitor_handler(struct k_work *item) {
             else
             {
                 zmk_usb_deinit();
-                if(app_mode.is_in_bt_mode)
+                if(app_mode.is_in_bt_mode || app_mode.is_in_ppt_mode)
                 {
-                    LOG_DBG("[zmk_mode_monitor_handler]:reset to exit usb and enter bt mode");
+                    LOG_DBG("[zmk_mode_monitor_handler]:reset to exit usb and enter bt or ppt mode");
                     app_system_reset(WDT_FLAG_RESET_SOC);
                 }
             }
@@ -203,15 +226,19 @@ static int zmk_mode_monitor_init(void) {
     k_work_init(&mm_msg_processor.work,zmk_mode_monitor_handler);
 
     /* gpio leds config */
-    gpio_pin_interrupt_configure_dt(&leds_pwron, GPIO_INT_DISABLE);
+    int err = gpio_pin_interrupt_configure_dt(&leds_pwron, GPIO_INT_DISABLE);
+    if(err)
+    {
+        LOG_ERR("Unable to disable irq of pin %u on %s,err %d",leds_pwron.pin,leds_pwron.port->name,err);
+    }
     gpio_pin_configure_dt(&leds_pwron, GPIO_OUTPUT_LOW);
     gpio_pin_configure_dt(&cap_led, GPIO_OUTPUT_HIGH);
     gpio_pin_configure_dt(&num_led, GPIO_OUTPUT_HIGH);
     gpio_pin_configure_dt(&bt_led, GPIO_OUTPUT_HIGH);
     gpio_pin_configure_dt(&ppt_led, GPIO_OUTPUT_HIGH);
 
-    if (!(gpio_is_ready_dt(&ppt_irq) || gpio_is_ready_dt(&bt_irq))) {
-        LOG_ERR("ppt or ble leds device is not ready");
+    if (!(gpio_is_ready_dt(&ppt_irq) || gpio_is_ready_dt(&bt_irq) || gpio_is_ready_dt(&win2mac))) {
+        LOG_ERR("ppt or ble or win2mac device is not ready");
         return -ENODEV;
     }
 
@@ -256,6 +283,30 @@ static int zmk_mode_monitor_init(void) {
     }
     if (rc != 0) {
         LOG_ERR("configure zmk ppt leds fail, err:%d ", rc);
+    }
+
+     /* win or mac Mode monitor callback enable and pin config */
+    gpio_init_callback(&zmk_mode_monitor_bt_cb, zmk_mode_monitor_callback, BIT((&win2mac)->pin));
+    rc = gpio_add_callback((&win2mac)->port, &zmk_mode_monitor_bt_cb);
+    if (rc != 0) {
+        LOG_ERR("configure win2mac gpio cb fail, err:%d ", rc);
+    }
+    gpio_pin_configure_dt(&win2mac, GPIO_INPUT | GPIO_PULL_UP | PIN_BLE_FLAGS);
+    if(!gpio_pin_get_raw(win2mac.port,win2mac.pin))
+    {
+        LOG_DBG("gpio_pin_get_raw win2mac low, set to windows");
+        app_mode.is_in_windows = true;
+        rc = gpio_pin_interrupt_configure_dt(&win2mac, GPIO_INT_LEVEL_HIGH);
+    }
+    else
+    {
+        LOG_DBG("gpio_pin_get_raw win2mac low, set to macos");
+        keyboard_switch_os();
+        app_mode.is_in_macos = true;
+        rc = gpio_pin_interrupt_configure_dt(&win2mac, GPIO_INT_LEVEL_LOW);
+    }
+    if (rc != 0) {
+        LOG_ERR("configure win2mac gpio interrupt fail, err:%d ", rc);
     }
 
     /* usb Mode monitor callback enable and pin config */
@@ -390,6 +441,11 @@ void num_led_off(void)
     gpio_pin_set(num_led.port, num_led.pin, 1);
 }
 
+void keyboard_switch_os(void)
+{
+    LOG_DBG("keyboard_switch_os");
+    zmk_keymap_layer_toggle(MACOS);
+}
 #if IS_ENABLED(CONFIG_PM)
 /**
  * @brief  CPU can enter wfi or dlps with checking all module status pass

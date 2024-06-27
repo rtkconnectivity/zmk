@@ -273,7 +273,7 @@ void keyboard_ppt_init(void)
     sync_tx_power_set(false, PPT_TX_POWER_DBM_MAX, PPT_TX_POWER_DBM_MIN);
 #endif
     /*Different message types have different queue size*/
-    uint8_t msg_quota[SYNC_MSG_TYPE_NUM] = {0, 2, 2, 2};
+    uint8_t msg_quota[SYNC_MSG_TYPE_NUM] = {0, 3, 3, 3};
     sync_msg_set_quota(msg_quota);
 
 #if !ENABLE_2_4G_LOG

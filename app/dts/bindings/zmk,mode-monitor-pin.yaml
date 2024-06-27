@@ -21,3 +21,7 @@ properties:
   detect-usb-gpios:
       type: phandle-array
       required: true
+
+  win2mac-gpios:
+    type: phandle-array
+    required: true

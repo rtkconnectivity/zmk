@@ -32,7 +32,7 @@ static int zmk_ppt_send_report(uint8_t *report, size_t len) {
     // {
     //     DBG_DIRECT("ppt send data:0x%x", report[i]);
     // }
-    int err = ppt_app_send_data(SYNC_MSG_TYPE_DYNAMIC_RETRANS,0,report,len);
+    int err = ppt_app_send_data(SYNC_MSG_TYPE_INFINITE_RETRANS,0,report,len);
     return err;
 }
 

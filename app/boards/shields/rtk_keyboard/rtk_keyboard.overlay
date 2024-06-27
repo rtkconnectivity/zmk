@@ -125,6 +125,7 @@
         ble-gpios = <&gpioa 9 (GPIO_ACTIVE_HIGH | RTL87X2G_GPIO_INPUT_DEBOUNCE_MS(8))>;
         ppt-gpios = <&gpioa 8 (GPIO_ACTIVE_HIGH | RTL87X2G_GPIO_INPUT_DEBOUNCE_MS(8))>;
         detect-usb-gpios = <&gpiob 28 (GPIO_ACTIVE_HIGH | RTL87X2G_GPIO_INPUT_DEBOUNCE_MS(20))>;
+        win2mac-gpios = <&gpioa 31 (GPIO_ACTIVE_HIGH | RTL87X2G_GPIO_INPUT_DEBOUNCE_MS(8))>;
     };
 
 	ppt: ppt {
