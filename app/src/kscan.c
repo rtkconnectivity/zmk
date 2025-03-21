@@ -16,9 +16,8 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/event_manager.h>
 #include <zmk/events/position_state_changed.h>
 #include <zmk/mode_monitor.h>
-#include <zmk/ppt.h>
-#include <zmk/ppt/keyboard_ppt_app.h>
 #include <zmk/board.h>
+#include <zmk/ir.h>
 
 #define ZMK_KSCAN_EVENT_STATE_PRESSED 0
 #define ZMK_KSCAN_EVENT_STATE_RELEASED 1
@@ -46,35 +45,27 @@ static void zmk_kscan_callback(const struct device *dev, uint32_t row, uint32_t 
        disabled when the scan interval of keyscan is set <100us, it may result in unstable interrupt
        intervals in this case we can skip check before wfi/dlps
      */
-    if (pressed) {
-        key_press_num++;
-        if (app_mode.is_in_usb_mode) {
-            pm_no_check_status_before_enter_wfi();
-        }
-    } else {
-        key_press_num--;
-        if (key_press_num == 0) {
-            pm_check_status_before_enter_wfi_or_dlps();
-        }
-    }
+    // if (pressed) {
+    //     key_press_num++;
+
+    // } else {
+    //     key_press_num--;
+    //     if (key_press_num == 0) {
+    //         //pm_check_status_before_enter_wfi_or_dlps();
+    //     }
+    // }
     struct zmk_kscan_event ev = {
         .row = row,
         .column = column,
         .state = (pressed ? ZMK_KSCAN_EVENT_STATE_PRESSED : ZMK_KSCAN_EVENT_STATE_RELEASED)};
 
-    if (zmk_ppt_is_ready()) {
-#if FEATURE_SUPPORT_2_4G_FAST_KEYSTROKE_PROCESS
-        zmk_rtk_ppt_key_handler(row, column, pressed);
-        return;
-#endif
-    }
     k_msgq_put(&zmk_kscan_msgq, &ev, K_NO_WAIT);
     k_work_submit(&msg_processor.work);
 }
-
+#include "trace.h"
 void zmk_kscan_process_msgq(struct k_work *item) {
     struct zmk_kscan_event ev;
-
+    LOG_DBG("enter key press handler");
     while (k_msgq_get(&zmk_kscan_msgq, &ev, K_NO_WAIT) == 0) {
         bool pressed = (ev.state == ZMK_KSCAN_EVENT_STATE_PRESSED);
         int32_t position = zmk_matrix_transform_row_column_to_position(ev.row, ev.column);
@@ -87,6 +78,10 @@ void zmk_kscan_process_msgq(struct k_work *item) {
 
         LOG_DBG("Row: %d, col: %d, position: %d, pressed: %s", ev.row, ev.column, position,
                 (pressed ? "true" : "false"));
+        if(ev.row == 0) {
+            extern int ir_test(void);
+            ir_test();
+        }
         raise_zmk_position_state_changed(
             (struct zmk_position_state_changed){.source = ZMK_POSITION_STATE_CHANGE_SOURCE_LOCAL,
                                                 .state = pressed,
@@ -100,11 +95,9 @@ int zmk_kscan_init(const struct device *dev) {
         LOG_ERR("Failed to get the KSCAN device");
         return -EINVAL;
     }
-
     k_work_init(&msg_processor.work, zmk_kscan_process_msgq);
 
     kscan_config(dev, zmk_kscan_callback);
     kscan_enable_callback(dev);
-
     return 0;
 }

@@ -8,11 +8,8 @@
 
 #include <stdint.h>
 
-#define ENABLE_2_4G_LOG 0
-
-#define PPT_PAIR_RSSI -65
-#define FEATURE_SUPPORT_PROPRIETARY_TRANSPORT 0
-#define FEATURE_SUPPORT_2_4G_FAST_KEYSTROKE_PROCESS 0
+#define GPIO_PIN_LEVEL_LOW 0
+#define GPIO_PIN_LEVEL_HIGH 1
 
 /**
  * MP test config
@@ -33,3 +30,14 @@
 #elif (MP_TEST_SINGLE_TONE_MODE == HCI_LAYER_SINGLE_TONE_INTERFACE)
 #define THE_WAY_TO_ENTER_MP_TEST_MODE ENTER_MP_TEST_MODE_BY_GPIO_TRIGGER
 #endif
+
+typedef struct APP_MODE {
+    bool is_in_single_test_mode;
+} T_APP_MODE;
+
+typedef struct APP_GLOBAL_DATA {
+    bool is_app_enabled_dlps;
+    bool is_watchdog_enable;
+} T_APP_GLOBAL_DATA;
+
+extern T_APP_GLOBAL_DATA app_global_data;

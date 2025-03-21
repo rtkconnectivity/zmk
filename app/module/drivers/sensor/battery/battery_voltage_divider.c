@@ -89,7 +89,6 @@ static int bvd_sample_fetch(const struct device *dev, enum sensor_channel chan) 
         drv_data->value.millivolts = millivolts;
         drv_data->value.state_of_charge = percent;
 
-        led_event_handler(percent);
     } else {
         LOG_DBG("Failed to read ADC: %d", rc);
     }

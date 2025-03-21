@@ -223,6 +223,10 @@ BT_GATT_SERVICE_DEFINE(
 struct bt_conn *destination_connection(void) {
     struct bt_conn *conn;
     bt_addr_le_t *addr = zmk_ble_active_profile_addr();
+    // char addr_str[BT_ADDR_LE_STR_LEN];
+    // bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
+
+    // LOG_DBG("Loaded %s address for active profile",addr_str);
     LOG_DBG("Address pointer %p", addr);
     if (!bt_addr_le_cmp(addr, BT_ADDR_LE_ANY)) {
         LOG_WRN("Not sending, no active address for current profile");

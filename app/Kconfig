@@ -5,16 +5,16 @@ mainmenu "ZMK Firmware"
 
 menu "ZMK"
 
-menu "Basic Keyboard Setup"
+menu "Basic Rcu Setup"
 
-config ZMK_KEYBOARD_NAME
-    string "Keyboard Name"
+config ZMK_RCU_NAME
+    string "Rcu Name"
 
 config USB_DEVICE_PRODUCT
-    default ZMK_KEYBOARD_NAME
+    default ZMK_RCU_NAME
 
 config BT_DEVICE_NAME
-    default ZMK_KEYBOARD_NAME
+    default ZMK_RCU_NAME
 
 config USB_DEVICE_VID
     default 0x1D50
@@ -32,7 +32,7 @@ config BT_DIS_PNP_PID
     default 0x615E
 
 config BT_DIS_MODEL
-    default ZMK_KEYBOARD_NAME
+    default ZMK_RCU_NAME
 
 config BT_DIS_MANUF
     default "ZMK Project"

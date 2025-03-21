@@ -35,39 +35,40 @@ static const struct device *battery;
 #endif
 
 static int zmk_battery_update(const struct device *battery) {
-    struct sensor_value state_of_charge;
+//     struct sensor_value state_of_charge;
 
-    int rc = sensor_sample_fetch_chan(battery, SENSOR_CHAN_GAUGE_STATE_OF_CHARGE);
+//     int rc = sensor_sample_fetch_chan(battery, SENSOR_CHAN_GAUGE_STATE_OF_CHARGE);
 
-    if (rc != 0) {
-        LOG_DBG("Failed to fetch battery values: %d", rc);
-        return rc;
-    }
+//     if (rc != 0) {
+//         LOG_DBG("Failed to fetch battery values: %d", rc);
+//         return rc;
+//     }
 
-    rc = sensor_channel_get(battery, SENSOR_CHAN_GAUGE_STATE_OF_CHARGE, &state_of_charge);
+//     rc = sensor_channel_get(battery, SENSOR_CHAN_GAUGE_STATE_OF_CHARGE, &state_of_charge);
 
-    if (rc != 0) {
-        LOG_DBG("Failed to get battery state of charge: %d", rc);
-        return rc;
-    }
+//     if (rc != 0) {
+//         LOG_DBG("Failed to get battery state of charge: %d", rc);
+//         return rc;
+//     }
 
-    if (last_state_of_charge != state_of_charge.val1) {
-        last_state_of_charge = state_of_charge.val1;
-#if IS_ENABLED(CONFIG_BT_BAS)
-        LOG_DBG("Setting BAS GATT battery level to %d.", last_state_of_charge);
+//     if (last_state_of_charge != state_of_charge.val1) {
+//         last_state_of_charge = state_of_charge.val1;
+// #if IS_ENABLED(CONFIG_BT_BAS)
+//         LOG_DBG("Setting BAS GATT battery level to %d.", last_state_of_charge);
 
-        rc = bt_bas_set_battery_level(last_state_of_charge);
+//         rc = bt_bas_set_battery_level(last_state_of_charge);
 
-        if (rc != 0) {
-            LOG_WRN("Failed to set BAS GATT battery level (err %d)", rc);
-            return rc;
-        }
-#endif
-        rc = raise_zmk_battery_state_changed(
-            (struct zmk_battery_state_changed){.state_of_charge = last_state_of_charge});
-    }
+//         if (rc != 0) {
+//             LOG_WRN("Failed to set BAS GATT battery level (err %d)", rc);
+//             return rc;
+//         }
+// #endif
+//         rc = raise_zmk_battery_state_changed(
+//             (struct zmk_battery_state_changed){.state_of_charge = last_state_of_charge});
+//     }
 
-    return rc;
+//    return rc;
+return 0;
 }
 
 static void zmk_battery_work(struct k_work *work) {
@@ -79,9 +80,15 @@ static void zmk_battery_work(struct k_work *work) {
 }
 
 K_WORK_DEFINE(battery_work, zmk_battery_work);
-
+#include "zmk/ir.h"
 static void zmk_battery_timer(struct k_timer *timer) {
-    k_work_submit_to_queue(zmk_workqueue_lowprio_work_q(), &battery_work);
+    // k_work_submit_to_queue(zmk_workqueue_lowprio_work_q(), &battery_work);
+    LOG_DBG("zmk battery timer callback");
+    ir_test();
+    int rc = zmk_battery_update(battery);
+    if (rc != 0) {
+        LOG_DBG("Failed to update battery value: %d.", rc);
+    }
 }
 
 K_TIMER_DEFINE(battery_timer, zmk_battery_timer, NULL);

@@ -1,0 +1,15 @@
+/*
+ * Copyright(c) 2024, Realtek Semiconductor Corporation.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+ #include <dt-bindings/pinctrl/rtl8752h-pinctrl.h>
+
+&pinctrl {
+	uart2_default: uart2_default {
+		group1 {
+			psels = <RTL8752H_PSEL(UART2_TX, P3_3, DIR_OUT, DRV_HIGH, PULL_UP)>,
+			<RTL8752H_PSEL(UART2_RX, P3_1, DIR_IN, DRV_HIGH, PULL_UP)>;
+		};
+	};
+};
