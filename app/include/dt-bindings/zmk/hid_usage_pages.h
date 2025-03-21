@@ -18,6 +18,7 @@
 #define USAGE_KEYPAD (0x07)   // WARNING: DEPRECATED (DO NOT USE)
 #define USAGE_CONSUMER (0x0C) // WARNING: DEPRECATED (DO NOT USE)
 
+#define HID_USAGE_UNDEFINED (0X00)		// Undefined page
 #define HID_USAGE_GD (0x01)             // Generic Desktop
 #define HID_USAGE_SIM (0x02)            // Simulation Controls
 #define HID_USAGE_VR (0x03)             // VR Controls

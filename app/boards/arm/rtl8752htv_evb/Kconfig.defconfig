@@ -1,0 +1,14 @@
+if BOARD_RTL8752HTV_EVB
+
+config BOARD
+	default "rtl8752htv_evb"
+
+config REALTEK_BT
+	bool "realtek bt config"
+    default y
+
+config REALTEK_BT_CONTROLLER_STACK_SIZE
+	int "config bt controller stack size"
+	default 2560
+
+endif

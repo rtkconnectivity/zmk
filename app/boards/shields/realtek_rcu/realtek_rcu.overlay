@@ -1,0 +1,155 @@
+#include <dt-bindings/zmk/matrix_transform.h>
+#include <dt-bindings/led/led.h>
+#include <zephyr/dt-bindings/gpio/realtek-rtl8752h-gpio.h>
+
+&gpio {
+    status = "okay";
+};
+
+//&corewdt {
+//    status = "disabled";
+//    initial-timeout-ms = <5000>;
+//};
+//
+//&aonwdt {
+//    status = "okay";
+//    initial-timeout-ms = <5000>;
+//};
+//
+/// {
+//    aliases {
+//        watchdog = &aonwdt;
+//    };
+//};
+
+&adc {
+    pinctrl-0 = <&adc_default>;
+    pinctrl-names = "default";
+    #address-cells = <1>;
+    #size-cells = <0>;
+    status = "okay";
+    is-bypass-mode;
+    channel@2 {
+        reg = <2>;
+        zephyr,gain = "ADC_GAIN_1";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,resolution = <12>;
+    };
+};
+/ {
+    chosen {
+        zmk,kscan = &kscan;
+        zmk,matrix-transform = &default_transform;
+        zmk,battery = &vbatt;
+    };
+
+    vbatt: vbatt {
+        compatible = "zmk,battery-voltage-divider";
+        io-channels = <&adc 2>;
+        output-ohms = <100000>;
+        full-ohms = <(100000 + 100000)>;
+    };
+
+};
+
+/{
+//    gpio_leds: gpio_leds {
+//        compatible = "zmk,gpio-leds-all";
+//        pwr-gpios = <&gpio 29 GPIO_ACTIVE_HIGH>;
+//        cap-gpios = <&gpio 28 GPIO_ACTIVE_HIGH>;
+//        num-gpios = <&gpio 16 GPIO_ACTIVE_HIGH>;
+//        ble-gpios = <&gpio 27 GPIO_ACTIVE_HIGH>;
+//        ppt-gpios = <&gpio 26 GPIO_ACTIVE_HIGH>;
+//        other-gpios = <&gpio 23 GPIO_ACTIVE_HIGH>;
+//    };
+
+    default_transform: matrix_transform {
+        compatible = "zmk,matrix-transform";
+        rows = <5>;
+        columns = <4>;
+        map = <
+            RC(0,0) RC(0,1) RC(0,2) RC(0,3) 
+            RC(1,0) RC(1,1) RC(1,2) RC(1,3)
+            RC(2,0) RC(2,1) RC(2,2) RC(2,3)
+            RC(3,0) RC(3,1) RC(3,2) RC(3,3) 
+            RC(4,0) RC(4,1) RC(4,2) RC(4,3) 
+        >;
+    };
+ };
+
+&kscan {
+    pinctrl-0 = <&kscan_default>;
+    pinctrl-1 = <&kscan_sleep>;
+    pinctrl-names = "default", "sleep";
+    row-size = <5>;
+    col-size = <4>;
+    debounce-time-us = <10000>;
+    scan-time-us = <10000>;
+    release-time-us = <10000>;
+    scan-debounce-cnt = <1>;
+    status = "okay";
+};
+
+&ir {
+ 	status = "okay";
+ 	pinctrl-0 = <&ir_tx>;
+ 	pinctrl-1 = <&ir_rx>;
+ 	pinctrl-names = "ir-tx", "ir-rx";
+ };
+
+&pinctrl {
+ 	ir_tx: ir_tx {
+ 		group1 {
+ 			psels = <RTL8752H_PSEL(IRDA_TX, P0_5, DIR_OUT, DRV_HIGH, PULL_NONE)>;
+ 		};
+ 	};
+ 	ir_rx: ir_rx {
+ 		group1 {
+ 			psels = <RTL8752H_PSEL(IRDA_RX, P0_6, DIR_OUT, DRV_HIGH, PULL_NONE)>;
+ 		};
+ 	};
+    adc_default: adc_default {
+        group1 {
+             psels = <RTL8752H_PSEL(SW_MODE, P2_2, DIR_IN, DRV_LOW, PULL_NONE)>;
+        };
+    };
+    kscan_default: kscan_default {
+        group1 {
+            psels =
+            <RTL8752H_PSEL(KEY_COL_0, P4_3, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL8752H_PSEL(KEY_COL_1, P4_2, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL8752H_PSEL(KEY_COL_2, P4_1, DIR_OUT, DRV_LOW, PULL_NONE)>,
+            <RTL8752H_PSEL(KEY_COL_3, P4_0, DIR_OUT, DRV_LOW, PULL_NONE)>;
+        };
+        group2 {
+            psels =
+            <RTL8752H_PSEL(KEY_ROW_0, P0_0, DIR_IN, DRV_LOW, PULL_UP)>,
+            <RTL8752H_PSEL(KEY_ROW_1, P0_1, DIR_IN, DRV_LOW, PULL_UP)>,
+            <RTL8752H_PSEL(KEY_ROW_2, P0_2, DIR_IN, DRV_LOW, PULL_UP)>,
+            <RTL8752H_PSEL(KEY_ROW_3, P0_4, DIR_IN, DRV_LOW, PULL_UP)>,
+            <RTL8752H_PSEL(KEY_ROW_4, P1_7, DIR_IN, DRV_LOW, PULL_UP)>;
+            bias-pull-strong;
+        };
+        };
+    kscan_sleep: kscan_sleep {
+        group1 {
+            psels =
+            <RTL8752H_PSEL(SW_MODE, P4_3, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL8752H_PSEL(SW_MODE, P4_2, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL8752H_PSEL(SW_MODE, P4_1, DIR_OUT, DRV_LOW, PULL_DOWN)>,
+            <RTL8752H_PSEL(SW_MODE, P4_0, DIR_OUT, DRV_LOW, PULL_DOWN)>;
+        };
+        group2 {
+            psels =
+            <RTL8752H_PSEL(SW_MODE, P0_0, DIR_IN, DRV_HIGH, PULL_UP)>,
+            <RTL8752H_PSEL(SW_MODE, P0_1, DIR_IN, DRV_HIGH, PULL_UP)>,
+            <RTL8752H_PSEL(SW_MODE, P0_2, DIR_IN, DRV_HIGH, PULL_UP)>,
+            <RTL8752H_PSEL(SW_MODE, P0_4, DIR_IN, DRV_HIGH, PULL_UP)>,
+            <RTL8752H_PSEL(SW_MODE, P1_7, DIR_IN, DRV_HIGH, PULL_UP)>;
+            bias-pull-strong;
+            wakeup-low;
+        };
+        };
+};
+

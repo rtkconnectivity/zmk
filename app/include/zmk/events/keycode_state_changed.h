@@ -29,8 +29,6 @@ zmk_keycode_state_changed_from_encoded(uint32_t encoded, bool pressed, int64_t t
     uint16_t id = ZMK_HID_USAGE_ID(encoded);
     uint8_t implicit_modifiers = 0x00;
     uint8_t explicit_modifiers = 0x00;
-    static uint8_t caps_lock_flag = 0;
-    static uint8_t num_lock_flag = 0;
 
     if (!page) {
         page = HID_USAGE_KEY;
@@ -40,23 +38,6 @@ zmk_keycode_state_changed_from_encoded(uint32_t encoded, bool pressed, int64_t t
         explicit_modifiers = SELECT_MODS(encoded);
     } else {
         implicit_modifiers = SELECT_MODS(encoded);
-    }
-    if (page == HID_USAGE_KEY) {
-        if (id == HID_USAGE_KEY_KEYBOARD_CAPS_LOCK && pressed == 1 && caps_lock_flag == 0) {
-            LED_ON(LED_CAPSLOCK);
-            caps_lock_flag = 1;
-        } else if (id == HID_USAGE_KEY_KEYBOARD_CAPS_LOCK && pressed == 1 && caps_lock_flag == 1) {
-            LED_OFF(LED_CAPSLOCK);
-            caps_lock_flag = 0;
-        } else if (id == HID_USAGE_KEY_KEYPAD_NUM_LOCK_AND_CLEAR && pressed == 1 &&
-                   num_lock_flag == 0) {
-            LED_ON(LED_NUMLOCK);
-            num_lock_flag = 1;
-        } else if (id == HID_USAGE_KEY_KEYPAD_NUM_LOCK_AND_CLEAR && pressed == 1 &&
-                   num_lock_flag == 1) {
-            LED_OFF(LED_NUMLOCK);
-            num_lock_flag = 0;
-        }
     }
     return (struct zmk_keycode_state_changed){.usage_page = page,
                                               .keycode = id,

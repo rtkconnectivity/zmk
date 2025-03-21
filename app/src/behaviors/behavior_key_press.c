@@ -12,9 +12,9 @@
 
 #include <zmk/event_manager.h>
 #include <zmk/events/keycode_state_changed.h>
-#include <zmk/ppt/keyboard_ppt_app.h>
 #include <zmk/behavior.h>
 #include <zmk/board.h>
+#include <zmk/ir/ir_send.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -23,26 +23,18 @@ static int behavior_key_press_init(const struct device *dev) { return 0; };
 static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
     LOG_DBG("position %d keycode 0x%02X", event.position, binding->param1);
-    if (zmk_ppt_is_ready()) {
-#if FEATURE_SUPPORT_2_4G_FAST_KEYSTROKE_PROCESS
-		struct zmk_keycode_state_changed ev =
-            zmk_keycode_state_changed_from_encoded(binding->param1, true, event.timestamp);
-        hid_listener_keycode_pressed(&ev);
+#if SUPPORT_IR_TX_FEATURE
+    ir_send_key_press_handle(ZMK_HID_USAGE_ID(binding->param1));
 #endif
-    }
     return raise_zmk_keycode_state_changed_from_encoded(binding->param1, true, event.timestamp);
 }
 
 static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
                                       struct zmk_behavior_binding_event event) {
     LOG_DBG("position %d keycode 0x%02X", event.position, binding->param1);
-    if (zmk_ppt_is_ready()) {
-#if FEATURE_SUPPORT_2_4G_FAST_KEYSTROKE_PROCESS
-	    struct zmk_keycode_state_changed ev =
-		    zmk_keycode_state_changed_from_encoded(binding->param1, true, event.timestamp);
-	    hid_listener_keycode_released(&ev);
+#if SUPPORT_IR_TX_FEATURE
+    ir_send_key_release_handle();
 #endif
-    }
     return raise_zmk_keycode_state_changed_from_encoded(binding->param1, false, event.timestamp);
 }
 

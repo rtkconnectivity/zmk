@@ -3,4 +3,7 @@ if BOARD_RTL8762GKU
 config BOARD
     default "rtl8762gku"
 
+config REALTEK_BT
+    default y
+
 endif #BOARD_RTL8762GKU

@@ -45,6 +45,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/leds/leds_gpio_driver.h>
 #include "trace.h"
 
+static uint8_t test_flag = 100;
 #if IS_ENABLED(CONFIG_ZMK_BLE_PASSKEY_ENTRY)
 #include <zmk/events/keycode_state_changed.h>
 
@@ -89,6 +90,14 @@ static const struct bt_data zmk_ble_ad[] = {
                   ),
 };
 
+#if IS_ENABLED(CONFIG_SETTINGS)
+static void ble_save_profile_work(struct k_work *work) {
+    settings_save_one("ble/active_profile", &active_profile, sizeof(active_profile));
+}
+
+static struct k_work_delayable ble_save_work;
+#endif
+
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 
 static bt_addr_le_t peripheral_addrs[ZMK_SPLIT_BLE_PERIPHERAL_COUNT];
@@ -131,6 +140,8 @@ void set_profile_address(uint8_t index, const bt_addr_le_t *addr) {
 bool zmk_ble_active_profile_is_connected(void) {
     struct bt_conn *conn;
     struct bt_conn_info info;
+    // LOG_DBG("zmk_ble_active_profile_is_connected, active profile index %d", active_profile);
+    // k_work_reschedule(&ble_save_work, K_MSEC(CONFIG_ZMK_SETTINGS_SAVE_DEBOUNCE));
     bt_addr_le_t *addr = zmk_ble_active_profile_addr();
     if (!bt_addr_le_cmp(addr, BT_ADDR_LE_ANY)) {
         return false;
@@ -200,8 +211,8 @@ int update_advertising(void) {
     switch (desired_adv + CURR_ADV(advertising_status)) {
     case ZMK_ADV_NONE + CURR_ADV(ZMK_ADV_DIR):
     case ZMK_ADV_NONE + CURR_ADV(ZMK_ADV_CONN):
-        LED_BLINK_EXIT();
-        LED_ON(LED_BT);
+        // LED_BLINK_EXIT();
+        // LED_ON(LED_BT);
         CHECKED_ADV_STOP();
         break;
     case ZMK_ADV_DIR + CURR_ADV(ZMK_ADV_DIR):
@@ -217,9 +228,7 @@ int update_advertising(void) {
         CHECKED_OPEN_ADV();
         break;
     case ZMK_ADV_CONN + CURR_ADV(ZMK_ADV_NONE):
-        if (app_mode.is_in_bt_mode && !app_mode.is_in_usb_mode) {
-            LED_BLINK(LED_BT, LED_GPIO_PAIR_CNT);
-        }
+        //LED_BLINK(LED_BT, LED_GPIO_PAIR_CNT);
         CHECKED_OPEN_ADV();
         break;
     }
@@ -275,13 +284,7 @@ int zmk_ble_profile_index(const bt_addr_le_t *addr) {
     return -ENODEV;
 }
 
-#if IS_ENABLED(CONFIG_SETTINGS)
-static void ble_save_profile_work(struct k_work *work) {
-    settings_save_one("ble/active_profile", &active_profile, sizeof(active_profile));
-}
 
-static struct k_work_delayable ble_save_work;
-#endif
 
 static int ble_save_profile(void) {
 #if IS_ENABLED(CONFIG_SETTINGS)
@@ -300,7 +303,7 @@ int zmk_ble_prof_select(uint8_t index) {
     if (active_profile == index) {
         return 0;
     }
-
+// DBG_DIRECT("zmk_ble_prof_select:modify active profile0");
     active_profile = index;
     ble_save_profile();
 
@@ -346,8 +349,33 @@ int zmk_ble_prof_disconnect(uint8_t index) {
     bt_conn_unref(conn);
     return result;
 }
+int direct_loader(
+	const char *key,
+	size_t len,
+	settings_read_cb read_cb,
+	void *cb_arg,
+	void *param)
+{
 
-bt_addr_le_t *zmk_ble_active_profile_addr(void) { return &profiles[active_profile].peer; }
+	return 0;
+}
+#include "trace.h"
+bt_addr_le_t *zmk_ble_active_profile_addr(void) { 
+    // LOG_DBG("zmk_ble_active_profile_addr, active profile index %d, addr 0x%x", active_profile, &active_profile);
+    // uint8_t profile;
+	// int rc;
+
+	// rc = settings_load_subtree_direct("ble/profile", direct_loader,
+	// 				  (void *)&profile);
+	// if (rc == 0) {
+	// 	printk("  direct.profile = %d", profile);
+	// } else {
+	// 	printk("  direct load fails unexpectedly\n");
+	// }
+    // LOG_ERR("print active profile value %d address 0x%x, value of original address%d", active_profile, (unsigned int)&active_profile,*(uint8_t *)0x20b061);
+    // DBG_DIRECT("print active profile value %d address 0x%x, value of original address%d", active_profile, &active_profile,*(uint8_t *)0x20b061);
+
+    return &profiles[active_profile].peer; }//active_profile
 
 char *zmk_ble_active_profile_name(void) { return profiles[active_profile].name; }
 
@@ -438,6 +466,7 @@ static int ble_profiles_handle_set(const char *name, size_t len, settings_read_c
             LOG_ERR("Failed to handle active profile from settings (err %d)", err);
             return err;
         }
+        LOG_DBG("Loaded %d active_profile", active_profile);
     }
 #if IS_ENABLED(CONFIG_BT_SUPPORT_STATIC_RANDOM_ADDRESS)
     else if (settings_name_steq(name, "address", &next) && next) {
@@ -520,8 +549,8 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     if (is_conn_active_profile(conn)) {
         LOG_DBG("Active profile connected");
-        LED_BLINK_EXIT();
-        LED_ON(LED_BT);
+        // LED_BLINK_EXIT();
+        // LED_ON(LED_BT);
         k_work_submit(&raise_profile_changed_event_work);
     }
 }
@@ -689,6 +718,7 @@ static void zmk_ble_ready(int err) {
 }
 
 int zmk_ble_init(void) {
+    LOG_DBG("zmk ble init");
     int err = bt_enable(NULL);
 
     if (err) {
