@@ -6,6 +6,7 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
+#include <zephyr/devicetree.h>
 #include <zephyr/bluetooth/addr.h>
 #include <zephyr/drivers/kscan.h>
 #include <zephyr/logging/log.h>
@@ -16,9 +17,13 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/event_manager.h>
 #include <zmk/events/position_state_changed.h>
 #include <zmk/mode_monitor.h>
+#if IS_ENABLED(CONFIG_SOC_SERIES_RTL87X2G)
 #include <zmk/ppt.h>
 #include <zmk/ppt/keyboard_ppt_app.h>
+#include "rtl_pinmux.h"
+#endif
 #include <zmk/board.h>
+#include "trace.h"
 
 #define ZMK_KSCAN_EVENT_STATE_PRESSED 0
 #define ZMK_KSCAN_EVENT_STATE_RELEASED 1
@@ -37,8 +42,6 @@ K_MSGQ_DEFINE(zmk_kscan_msgq, sizeof(struct zmk_kscan_event), CONFIG_ZMK_KSCAN_E
 
 static uint8_t key_press_num = 0;
 
-#include "rtl_pinmux.h"
-#include "trace.h"
 static void zmk_kscan_callback(const struct device *dev, uint32_t row, uint32_t column,
                                bool pressed) {
     LOG_DBG("keyscan callback: row,col is (%d %d)", row, column);
@@ -49,25 +52,26 @@ static void zmk_kscan_callback(const struct device *dev, uint32_t row, uint32_t 
     if (pressed) {
         key_press_num++;
         if (app_mode.is_in_usb_mode) {
-            pm_no_check_status_before_enter_wfi();
+            // pm_no_check_status_before_enter_wfi();
         }
     } else {
         key_press_num--;
         if (key_press_num == 0) {
-            pm_check_status_before_enter_wfi_or_dlps();
+            // pm_check_status_before_enter_wfi_or_dlps();
         }
     }
     struct zmk_kscan_event ev = {
         .row = row,
         .column = column,
         .state = (pressed ? ZMK_KSCAN_EVENT_STATE_PRESSED : ZMK_KSCAN_EVENT_STATE_RELEASED)};
-
+#if IS_ENABLED(CONFIG_SOC_SERIES_RTL87X2G)
     if (zmk_ppt_is_ready()) {
 #if FEATURE_SUPPORT_2_4G_FAST_KEYSTROKE_PROCESS
         zmk_rtk_ppt_key_handler(row, column, pressed);
         return;
 #endif
     }
+#endif
     k_msgq_put(&zmk_kscan_msgq, &ev, K_NO_WAIT);
     k_work_submit(&msg_processor.work);
 }

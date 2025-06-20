@@ -1,15 +1,31 @@
 identifier: rtl8762gn_evb
-name: rtl8762gn_evb
+name: Realtek rtl8762gn evaluation board
 type: mcu
 arch: arm
-ram: 96
+ram: 320
 flash: 1024
 toolchain:
   - zephyr
   - gnuarmemb
   - xtools
 supported:
+  - adc
+  - gpio
+  - i2c
+  - counter
+  - spi
+  - watchdog
+  - nvs
+  - pwm
+  - uart
+  - ble
+  - usb_device
+  - dma
+  - kscan
+  - entropy
 testing:
   ignore_tags:
     - net
-    - bluetooth
+    - hwinfo
+    - ipc
+vendor: realtek

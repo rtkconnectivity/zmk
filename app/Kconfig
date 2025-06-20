@@ -118,9 +118,6 @@ menu "Output Types"
 config ZMK_USB
     bool "USB"
     depends on (!ZMK_SPLIT || (ZMK_SPLIT && ZMK_SPLIT_ROLE_CENTRAL))
-    select USB
-    select USB_DEVICE_STACK
-    select USB_DEVICE_HID
 
 config ZMK_USB_BOOT
     bool "USB Boot Protocol Support"
@@ -465,7 +462,7 @@ menu "Advanced"
 
 menu "Initialization Priorities"
 
-if USB_DEVICE_STACK
+if USB_DEVICE_STACK || USB_DEVICE_STACK_NEXT
 
 config ZMK_USB_INIT_PRIORITY
     int "USB Init Priority"
@@ -666,6 +663,60 @@ choice CBPRINTF_IMPLEMENTATION
     default CBPRINTF_NANO
 
 endchoice
+
+menu "ZMK USB options"
+	depends on USB_DEVICE_STACK_NEXT
+
+config USBD_MANUFACTURER
+	string "USB device manufacturer string"
+	default "Realtek"
+	help
+	  USB device manufacturer string.
+
+config USBD_PRODUCT
+	string "USB device product string"
+	default "KEYBOARD 8K"
+	help
+	  USB device product stringa.
+
+config USBD_PID
+	hex "USB device Product ID"
+	default 0x4762
+	help
+	  USB device Product ID.
+
+config USBD_VID
+	hex "USB device Vendor ID"
+	default 0x0BDA
+	help
+	  USB device Vendor ID.
+
+
+config USBD_SELF_POWERED
+	bool "USB device Self-powered attribute"
+	default y
+	help
+	  Set the Self-powered attribute in the configuration.
+
+config USBD_REMOTE_WAKEUP
+	bool "USB device Remote Wakeup attribute"
+	help
+	  Set the Remote Wakeup attribute in the configuration.
+
+config USBD_MAX_POWER
+	int "USB device bMaxPower value"
+	default 250
+	range 0 250
+	help
+	  bMaxPower value in the configuration in 2 mA units.
+
+config USBD_20_EXTENSION_DESC
+	bool "Use default USB 2.0 Extension Descriptor"
+	help
+	  Set bcdUSB value to 0201 and use default USB 2.0 Extension Descriptor.
+
+endmenu
+
 
 module = ZMK
 module-str = zmk

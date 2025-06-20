@@ -17,7 +17,7 @@
 /**
  * MP test config
  */
-#define FEATURE_SUPPORT_MP_TEST_MODE 1  /* set 1 to support mp test mode */
+#define FEATURE_SUPPORT_MP_TEST_MODE 0  /* set 1 to support mp test mode */
 
 #if FEATURE_SUPPORT_MP_TEST_MODE
 #define GAP_LAYER_SINGLE_TONE_INTERFACE 0   /* use gap layer api to send single tone */

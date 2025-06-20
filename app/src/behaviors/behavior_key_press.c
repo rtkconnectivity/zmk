@@ -12,7 +12,9 @@
 
 #include <zmk/event_manager.h>
 #include <zmk/events/keycode_state_changed.h>
+#if IS_ENABLED(CONFIG_SOC_SERIES_RTL87X2G)
 #include <zmk/ppt/keyboard_ppt_app.h>
+#endif
 #include <zmk/behavior.h>
 #include <zmk/board.h>
 
@@ -23,6 +25,7 @@ static int behavior_key_press_init(const struct device *dev) { return 0; };
 static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
     LOG_DBG("position %d keycode 0x%02X", event.position, binding->param1);
+#if IS_ENABLED(CONFIG_ZMK_PPT)
     if (zmk_ppt_is_ready()) {
 #if FEATURE_SUPPORT_2_4G_FAST_KEYSTROKE_PROCESS
 		struct zmk_keycode_state_changed ev =
@@ -30,12 +33,14 @@ static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
         hid_listener_keycode_pressed(&ev);
 #endif
     }
+#endif
     return raise_zmk_keycode_state_changed_from_encoded(binding->param1, true, event.timestamp);
 }
 
 static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
                                       struct zmk_behavior_binding_event event) {
     LOG_DBG("position %d keycode 0x%02X", event.position, binding->param1);
+#if IS_ENABLED(CONFIG_ZMK_PPT)
     if (zmk_ppt_is_ready()) {
 #if FEATURE_SUPPORT_2_4G_FAST_KEYSTROKE_PROCESS
 	    struct zmk_keycode_state_changed ev =
@@ -43,6 +48,7 @@ static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
 	    hid_listener_keycode_released(&ev);
 #endif
     }
+#endif
     return raise_zmk_keycode_state_changed_from_encoded(binding->param1, false, event.timestamp);
 }
 

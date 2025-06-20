@@ -1,6 +1,42 @@
+# Copyright (c) 2024 Realtek Semiconductor Corp.
+# SPDX-License-Identifier: Apache-2.0
 if BOARD_RTL8762GN_EVB
 
 config BOARD
-    default "rtl8762gn_evb"
+	default "rtl8762gn_evb"
+
+if BT
+
+config MAIN_STACK_SIZE
+	default 2048
+
+config COMMON_LIBC_MALLOC_ARENA_SIZE
+	default 1024
+
+config BT_CTLR
+	default n
+
+config REALTEK_BT
+	default y
+
+config BT_L2CAP_TX_MTU
+	default 247
+	
+config BT_BUF_EVT_RX_COUNT
+	default 8
+
+config BT_BUF_EVT_RX_SIZE
+	default 255
+
+config BT_BUF_ACL_TX_SIZE
+	default 251
+
+config BT_BUF_ACL_RX_SIZE
+	default 255
+
+config BT_BUF_ACL_RX_COUNT
+	default 7
+
+endif # BT
 
 endif #BOARD_RTL8762GN_EVB

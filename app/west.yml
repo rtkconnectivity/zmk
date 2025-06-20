@@ -7,7 +7,7 @@ manifest:
   projects:
     - name: zephyr
       remote: rtkconnectivity
-      revision: realtek-main-v3.5.0
+      revision: realtek-main-v3.7
       clone-depth: 1
       import:
         name-blocklist:

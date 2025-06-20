@@ -88,8 +88,9 @@ static int bvd_sample_fetch(const struct device *dev, enum sensor_channel chan) 
 
         drv_data->value.millivolts = millivolts;
         drv_data->value.state_of_charge = percent;
-
+#if IS_ENABLED(CONFIG_SOC_SERIES_RTL87X2G)
         led_event_handler(percent);
+#endif
     } else {
         LOG_DBG("Failed to read ADC: %d", rc);
     }

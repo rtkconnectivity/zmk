@@ -1,0 +1,5 @@
+board:
+  name: rtl8762gn_evb
+  vendor: realtek
+  socs:
+    - name: rtl8762gn

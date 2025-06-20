@@ -17,6 +17,7 @@
 #include <zmk/hid_indicators.h>
 #endif // IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
 #include <zmk/event_manager.h>
+#include <zmk/usbd_init.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -129,7 +130,11 @@ static const struct hid_ops ops = {
 static int zmk_usb_hid_send_report(const uint8_t *report, size_t len) {
     switch (zmk_usb_get_status()) {
     case USB_DC_SUSPEND:
+#if defined(CONFIG_USB_DEVICE_STACK_NEXT)
+        return zmk_usbd_wakeup_request();
+#else
         return usb_wakeup_request();
+#endif
     case USB_DC_ERROR:
     case USB_DC_RESET:
     case USB_DC_DISCONNECTED:
@@ -178,7 +183,11 @@ int zmk_usb_hid_send_mouse_report() {
 #endif // IS_ENABLED(CONFIG_ZMK_MOUSE)
 
 static int zmk_usb_hid_init(void) {
-    hid_dev = device_get_binding("HID_0");
+#if defined(CONFIG_USB_DEVICE_STACK_NEXT)
+	hid_dev = DEVICE_DT_GET_ONE(zephyr_hid_device);
+#else
+	hid_dev = device_get_binding("HID_0");
+#endif
     if (hid_dev == NULL) {
         LOG_ERR("Unable to locate HID device");
         return -EINVAL;

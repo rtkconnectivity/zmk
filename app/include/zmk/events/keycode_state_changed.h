@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "rtl_pinmux.h"
 #include <zephyr/kernel.h>
 #include <zmk/event_manager.h>
 #include <zmk/keys.h>
@@ -41,6 +40,7 @@ zmk_keycode_state_changed_from_encoded(uint32_t encoded, bool pressed, int64_t t
     } else {
         implicit_modifiers = SELECT_MODS(encoded);
     }
+#if IS_ENABLED(CONFIG_SOC_SERIES_RTL87X2G)
     if (page == HID_USAGE_KEY) {
         if (id == HID_USAGE_KEY_KEYBOARD_CAPS_LOCK && pressed == 1 && caps_lock_flag == 0) {
             LED_ON(LED_CAPSLOCK);
@@ -58,6 +58,7 @@ zmk_keycode_state_changed_from_encoded(uint32_t encoded, bool pressed, int64_t t
             num_lock_flag = 0;
         }
     }
+#endif
     return (struct zmk_keycode_state_changed){.usage_page = page,
                                               .keycode = id,
                                               .implicit_modifiers = implicit_modifiers,

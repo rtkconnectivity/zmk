@@ -68,7 +68,6 @@ K_MSGQ_DEFINE(zmk_mode_monitor_msgq, sizeof(struct zmk_mode_monitor_event), 4, 4
 static void zmk_mode_monitor_callback(const struct device *dev, struct gpio_callback *gpio_cb,
                                       uint32_t pins) {
     LOG_DBG("zmk_mode_monitor_callback, pins is %u,", pins);
-
     if ((!strcmp(dev->name, ppt_irq.port->name)) && (pins >> ppt_irq.pin == 1)) {
         if (app_mode.is_in_ppt_mode == false) {
             gpio_pin_interrupt_configure_dt(&ppt_irq, GPIO_INT_LEVEL_HIGH);
@@ -119,9 +118,11 @@ static void zmk_mode_monitor_callback(const struct device *dev, struct gpio_call
             gpio_pin_interrupt_configure_dt(&win2mac, GPIO_INT_LEVEL_LOW);
         }
     } else if ((!strcmp(dev->name, detect_usb.port->name)) && (pins >> detect_usb.pin == 1)) {
+        LOG_DBG("[zmk_mode_monitor_callback]:enter usb mode");
         gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_DISABLE);
 
         if (usb_mode_monitor_trigger_level == GPIO_PIN_LEVEL_HIGH) {
+            LOG_DBG("[zmk_mode_monitor_callback]:usb insert check");
             is_usb_in_debonce_check = true;
             usb_in_debonce_timer_num = 0;
         } else {
@@ -241,7 +242,7 @@ static int zmk_mode_monitor_init(void) {
         app_mode.is_in_windows = true;
         rc = gpio_pin_interrupt_configure_dt(&win2mac, GPIO_INT_LEVEL_HIGH);
     } else {
-        LOG_DBG("gpio_pin_get_raw win2mac low, set to macos");
+        LOG_DBG("gpio_pin_get_raw win2mac high, set to macos");
         keyboard_switch_os();
         app_mode.is_in_macos = true;
         rc = gpio_pin_interrupt_configure_dt(&win2mac, GPIO_INT_LEVEL_LOW);
@@ -260,14 +261,13 @@ static int zmk_mode_monitor_init(void) {
     gpio_pin_configure_dt(&detect_usb, GPIO_INPUT);
     rc = gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_LEVEL_HIGH);
     if (rc != 0) {
-        LOG_ERR("configure zmk usb leds fail, err:%d ", rc);
+        LOG_ERR("configure zmk usb interrupt fail, err:%d ", rc);
     }
     return 0;
 }
 
 static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer) {
     int usb_pin_polarity_status = gpio_pin_get_raw(detect_usb.port, detect_usb.pin);
-
     if (is_usb_in_debonce_check) {
         LED_BLINK_EXIT();
         app_global_data.is_app_enabled_dlps = false;
