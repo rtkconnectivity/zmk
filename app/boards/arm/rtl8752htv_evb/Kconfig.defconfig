@@ -1,0 +1,53 @@
+# Copyright (c) 2024 Realtek Semiconductor Corp.
+# SPDX-License-Identifier: Apache-2.0
+if BOARD_RTL8752HTV_EVB
+
+config BOARD
+	default "rtl8752htv_evb"
+
+endif
+
+if BT
+
+config MAIN_STACK_SIZE
+	default 2048
+
+config COMMON_LIBC_MALLOC_ARENA_SIZE
+	default 1024
+
+# choice BT_HCI_BUS_TYPE
+# 	default BT_RTL8752H
+# endchoice
+
+# choice BT_RECV_CONTEXT
+# 	default BT_RECV_BLOCKING
+# endchoice
+
+config BT_CTLR
+	default n
+
+config REALTEK_BT
+	default y
+
+config BT_L2CAP_TX_MTU
+	default 247
+
+config BT_BUF_EVT_RX_COUNT
+	default 8
+
+config BT_BUF_EVT_RX_SIZE
+	default 255
+
+config BT_BUF_ACL_TX_SIZE
+	default 251
+
+config BT_BUF_ACL_RX_SIZE
+	default 255
+
+config BT_BUF_ACL_RX_COUNT
+	default 7
+
+config REALTEK_BT_CONTROLLER_STACK_SIZE
+	default 2560
+
+endif # BT

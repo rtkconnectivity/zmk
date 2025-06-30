@@ -1,0 +1,31 @@
+identifier: rtl8752htv_evb
+name: Realtek rtl8752htv evaluation board
+type: mcu
+arch: arm
+ram: 104
+flash: 512
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+supported:
+  - adc
+  - gpio
+  - i2c
+  - counter
+  - spi
+  - watchdog
+  - nvs
+  - pwm
+  - uart
+  - ble
+  - usb_device
+  - dma
+  - kscan
+  - entropy
+testing:
+  ignore_tags:
+    - net
+    - hwinfo
+    - ipc
+vendor: realtek
