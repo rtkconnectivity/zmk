@@ -6,16 +6,16 @@
     model = "RealTek rtl8762gku ";
     compatible = "realtek,rtl8762gku";
 
-    chosen {
-        zephyr,sram = &ram_data;
-        zephyr,flash = &flash;
-        zephyr,code-partition = &app_partition;
-        zephyr,itcm = &ram_code;
-        zephyr,console = &uart2;
-        zephyr,shell-uart = &uart2;
-        zephyr,flash-controller = &fmc;
-        zephyr,entropy = &trng;
-    };
+	chosen {
+		zephyr,sram = &tcm0;
+		zephyr,flash = &flash;
+		zephyr,code-partition = &app_partition;
+		zephyr,itcm = &tcm1;
+		zephyr,console = &uart2;
+		zephyr,shell-uart = &uart2;
+		zephyr,flash-controller = &fmc;
+		zephyr,entropy = &trng;
+	};
 
     /* These aliases are provided for compatibility with samples */
     aliases {
