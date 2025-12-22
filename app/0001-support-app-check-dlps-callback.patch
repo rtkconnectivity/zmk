@@ -1,0 +1,528 @@
+From 8618ac659e0bc2b8085391c3e612e803a6b2ea79 Mon Sep 17 00:00:00 2001
+From: dariel_zhang <dariel_zhang@realsil.com.cn>
+Date: Wed, 22 May 2024 10:28:04 +0800
+Subject: [PATCH] support app check dlps callback
+
+---
+ .../shields/rtk_keyboard/rtk_keyboard.keymap  |   2 +-
+ app/include/zmk/mode_monitor.h                |   7 +-
+ app/src/ble.c                                 |  10 +-
+ app/src/main.c                                |  20 +-
+ app/src/mode_monitor.c                        | 206 ++++++------------
+ 5 files changed, 99 insertions(+), 146 deletions(-)
+
+diff --git a/app/boards/shields/rtk_keyboard/rtk_keyboard.keymap b/app/boards/shields/rtk_keyboard/rtk_keyboard.keymap
+index 56564d52..7117c0b5 100644
+--- a/app/boards/shields/rtk_keyboard/rtk_keyboard.keymap
++++ b/app/boards/shields/rtk_keyboard/rtk_keyboard.keymap
+@@ -38,7 +38,7 @@
+     &none  &none    &none     &none          &none   &none   &none           &none                                &none    &none       &none     &none            &none  &none
+     &none                                    &none   &none                   &none      &none    &none            &kp C_VOL_UP         &none     &none     &none  &none  &none  &none   &none
+     &none  &none    &kp C_BRI_DEC            &kp C_BRI_INC   &none  &none    &none      &kp C_PLAY_PAUSE  &none                        &kp C_NEXT    &none &none  &none   &none &none
+-    &kp C_AC_HOME   &none     &none          &none   &none   &none  &none    &none      &none    &none    &kp C_MUTE       &none     &none       &none   &none
++    &kp C_AC_HOME   &bt BT_CLR     &bt BT_CLR_ALL          &bt BT_DISC   &none   &none  &none    &none      &none    &none    &kp C_MUTE       &none     &none       &none   &none  &none
+             >;
+         };
+         
+diff --git a/app/include/zmk/mode_monitor.h b/app/include/zmk/mode_monitor.h
+index 47bb77dd..f24a9a1a 100644
+--- a/app/include/zmk/mode_monitor.h
++++ b/app/include/zmk/mode_monitor.h
+@@ -8,7 +8,7 @@
+ 
+ #pragma once
+ 
+-#define GPIO_PIN_LEVEL_LOW   0
++#define GPIO_PIN_LEVEL_LOW 0
+ #define GPIO_PIN_LEVEL_HIGH 1
+ #define USB_IN_DETECT_NUM 5
+ #define USB_OUT_DETECT_NUM 6
+@@ -19,7 +19,12 @@ typedef struct APP_MODE {
+     bool is_in_ppt_mode;
+ } T_APP_MODE;
+ 
++typedef struct APP_GLOBAL_DATA {
++    bool is_app_enabled_dlps;
++} T_APP_GLOBAL_DATA;
++
+ extern T_APP_MODE app_mode;
++extern T_APP_GLOBAL_DATA app_global_data;
+ 
+ enum app_mode_type {
+     BT_MODE = 0,
+diff --git a/app/src/ble.c b/app/src/ble.c
+index dc74c124..05cc3a1e 100644
+--- a/app/src/ble.c
++++ b/app/src/ble.c
+@@ -20,6 +20,7 @@
+ #include <zephyr/bluetooth/uuid.h>
+ #include <zephyr/bluetooth/gatt.h>
+ #include <zephyr/bluetooth/hci_types.h>
++#include <zmk/mode_monitor.h>
+ 
+ #if IS_ENABLED(CONFIG_SETTINGS)
+ 
+@@ -438,6 +439,7 @@ static bool is_conn_active_profile(const struct bt_conn *conn) {
+ }
+ 
+ static void connected(struct bt_conn *conn, uint8_t err) {
++    app_global_data.is_app_enabled_dlps = false;
+     char addr[BT_ADDR_LE_STR_LEN];
+     struct bt_conn_info info;
+     LOG_DBG("Connected thread: %p", k_current_get());
+@@ -510,7 +512,7 @@ static void le_param_updated(struct bt_conn *conn, uint16_t interval, uint16_t l
+     char addr[BT_ADDR_LE_STR_LEN];
+ 
+     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+-
++    app_global_data.is_app_enabled_dlps = true;
+     LOG_DBG("%s: interval %d latency %d timeout %d", addr, interval, latency, timeout);
+ }
+ 
+@@ -570,6 +572,7 @@ static bool pairing_allowed_for_current_profile(struct bt_conn *conn) {
+ 
+ static enum bt_security_err auth_pairing_accept(struct bt_conn *conn,
+                                                 const struct bt_conn_pairing_feat *const feat) {
++    //app_global_data.is_app_enabled_dlps = false;
+     struct bt_conn_info info;
+     bt_conn_get_info(conn, &info);
+ 
+@@ -688,8 +691,7 @@ int zmk_ble_init(void) {
+     return 0;
+ }
+ 
+-int zmk_ble_deinit(void)
+-{
++int zmk_ble_deinit(void) {
+     bt_disable();
+     return 0;
+ }
+@@ -778,4 +780,4 @@ ZMK_LISTENER(zmk_ble, zmk_ble_listener);
+ ZMK_SUBSCRIPTION(zmk_ble, zmk_keycode_state_changed);
+ #endif /* IS_ENABLED(CONFIG_ZMK_BLE_PASSKEY_ENTRY) */
+ 
+-//SYS_INIT(zmk_ble_init, APPLICATION, CONFIG_ZMK_BLE_INIT_PRIORITY);
++// SYS_INIT(zmk_ble_init, APPLICATION, CONFIG_ZMK_BLE_INIT_PRIORITY);
+diff --git a/app/src/main.c b/app/src/main.c
+index fbeb15e1..ad5dbe1f 100644
+--- a/app/src/main.c
++++ b/app/src/main.c
+@@ -20,15 +20,27 @@ LOG_MODULE_REGISTER(zmk, CONFIG_ZMK_LOG_LEVEL);
+ #include <drivers/ext_power.h>
+ #include "trace.h"
+ 
++#if CONFIG_PM
++#include "power_manager_unit_platform.h"
++enum PMCheckResult app_check_dlps(void) {
++    DBG_DIRECT("app check dlps %d", app_global_data.is_app_enabled_dlps);
++    return app_global_data.is_app_enabled_dlps ? PM_CHECK_PASS : PM_CHECK_FAIL;
++}
++static void app_register_dlps_cb(void) {
++    platform_pm_register_callback_func((void *)app_check_dlps, PLATFORM_PM_CHECK);
++}
++#endif
+ int main(void) {
+     LOG_INF("Welcome to ZMK!\n");
+-
++#if CONFIG_PM
++    app_register_dlps_cb();
++#endif
+     if (zmk_kscan_init(DEVICE_DT_GET(ZMK_MATRIX_NODE_ID)) != 0) {
+         return -ENOTSUP;
+     }
+-    DBG_DIRECT("app global mode usb %d ppt%d ble%d",app_mode.is_in_usb_mode, app_mode.is_in_ppt_mode,app_mode.is_in_bt_mode);
+-    if(app_mode.is_in_bt_mode && !app_mode.is_in_usb_mode)
+-    {
++    DBG_DIRECT("app global mode usb %d ppt%d ble%d", app_mode.is_in_usb_mode,
++               app_mode.is_in_ppt_mode, app_mode.is_in_bt_mode);
++    if (app_mode.is_in_bt_mode && !app_mode.is_in_usb_mode) {
+         zmk_ble_init();
+     }
+ 
+diff --git a/app/src/mode_monitor.c b/app/src/mode_monitor.c
+index 9f17f7a8..2ae88a88 100644
+--- a/app/src/mode_monitor.c
++++ b/app/src/mode_monitor.c
+@@ -12,7 +12,7 @@
+ #include <zmk/usb.h>
+ #include <zmk/app_wdt.h>
+ #include <zephyr/drivers/watchdog.h>
+-//#include <pm.h>
++// #include <pm.h>
+ 
+ #include "trace.h"
+ 
+@@ -24,7 +24,8 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
+ 
+ static struct gpio_dt_spec ppt_irq = GPIO_DT_SPEC_GET(DT_NODELABEL(mode_monitor), ppt_gpios);
+ static struct gpio_dt_spec bt_irq = GPIO_DT_SPEC_GET(DT_NODELABEL(mode_monitor), ble_gpios);
+-static struct gpio_dt_spec detect_usb = GPIO_DT_SPEC_GET(DT_NODELABEL(mode_monitor), detect_usb_gpios);
++static struct gpio_dt_spec detect_usb =
++    GPIO_DT_SPEC_GET(DT_NODELABEL(mode_monitor), detect_usb_gpios);
+ 
+ static struct gpio_dt_spec leds_pwron = GPIO_DT_SPEC_GET(DT_NODELABEL(gpio_leds), pwr_gpios);
+ static struct gpio_dt_spec cap_led = GPIO_DT_SPEC_GET(DT_NODELABEL(gpio_leds), cap_gpios);
+@@ -59,6 +60,8 @@ struct zmk_mode_monitor_event {
+ };
+ T_APP_MODE app_mode = {false};
+ 
++T_APP_GLOBAL_DATA app_global_data = {.is_app_enabled_dlps = true};
++
+ K_MSGQ_DEFINE(zmk_mode_monitor_msgq, sizeof(struct zmk_mode_monitor_event), 4, 4);
+ 
+ static void zmk_mode_monitor_callback(const struct device *dev, struct gpio_callback *gpio_cb,
+@@ -70,10 +73,7 @@ static void zmk_mode_monitor_callback(const struct device *dev, struct gpio_call
+             gpio_pin_set(ppt_led.port, ppt_led.pin, 0);
+             LOG_DBG("[zmk_mode_monitor_callback]:enter ppt mode");
+             app_mode.is_in_ppt_mode = true;
+-            struct zmk_mode_monitor_event ev = {
+-                .app_cur_mode = PPT_MODE,
+-                .state_changed = 1
+-            };
++            struct zmk_mode_monitor_event ev = {.app_cur_mode = PPT_MODE, .state_changed = 1};
+             k_msgq_put(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT);
+             k_work_submit(&mm_msg_processor.work);
+         } else if (app_mode.is_in_ppt_mode == true) {
+@@ -81,10 +81,7 @@ static void zmk_mode_monitor_callback(const struct device *dev, struct gpio_call
+             gpio_pin_set(ppt_led.port, ppt_led.pin, 1);
+             LOG_DBG("[zmk_mode_monitor_callback]:exit ppt mode");
+             app_mode.is_in_ppt_mode = false;
+-            struct zmk_mode_monitor_event ev = {
+-                .app_cur_mode = PPT_MODE,
+-                .state_changed = 0
+-            };
++            struct zmk_mode_monitor_event ev = {.app_cur_mode = PPT_MODE, .state_changed = 0};
+             k_msgq_put(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT);
+             k_work_submit(&mm_msg_processor.work);
+         }
+@@ -94,10 +91,7 @@ static void zmk_mode_monitor_callback(const struct device *dev, struct gpio_call
+             gpio_pin_set(bt_led.port, bt_led.pin, 0);
+             LOG_DBG("[zmk_mode_monitor_callback]:enter bt mode");
+             app_mode.is_in_bt_mode = true;
+-            struct zmk_mode_monitor_event ev = {
+-                .app_cur_mode = BT_MODE,
+-                .state_changed = 1
+-            };
++            struct zmk_mode_monitor_event ev = {.app_cur_mode = BT_MODE, .state_changed = 1};
+             k_msgq_put(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT);
+             k_work_submit(&mm_msg_processor.work);
+         } else if (app_mode.is_in_bt_mode == true) {
+@@ -105,91 +99,66 @@ static void zmk_mode_monitor_callback(const struct device *dev, struct gpio_call
+             gpio_pin_set(bt_led.port, bt_led.pin, 1);
+             LOG_DBG("[zmk_mode_monitor_callback]:exit bt mode");
+             app_mode.is_in_bt_mode = false;
+-            struct zmk_mode_monitor_event ev = {
+-                .app_cur_mode = BT_MODE,
+-                .state_changed = 0
+-            };
++            struct zmk_mode_monitor_event ev = {.app_cur_mode = BT_MODE, .state_changed = 0};
+             k_msgq_put(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT);
+             k_work_submit(&mm_msg_processor.work);
+         }
+-    }
+-    else
+-    {
++    } else {
+         gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_DISABLE);
+-        
+-        if(usb_mode_monitor_trigger_level == GPIO_PIN_LEVEL_HIGH)
+-        {
++
++        if (usb_mode_monitor_trigger_level == GPIO_PIN_LEVEL_HIGH) {
+             is_usb_in_debonce_check = true;
+             usb_in_debonce_timer_num = 0;
+-        }
+-        else
+-        {
++        } else {
+             gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_DISABLE);
+             is_usb_out_debonce_check = true;
+             usb_out_debonce_timer_num = 0;
+         }
+-        k_timer_start(&usb_mode_monitor_timer, K_MSEC(50),K_NO_WAIT);
++        k_timer_start(&usb_mode_monitor_timer, K_MSEC(50), K_NO_WAIT);
+     }
+ }
+ /* zmk mode monitor handler */
+ static void zmk_mode_monitor_handler(struct k_work *item) {
+     struct zmk_mode_monitor_event ev;
+ 
+-    while(k_msgq_get(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT) == 0)
+-    {
+-        if(ev.app_cur_mode == BT_MODE)
+-        {
+-            if(ev.state_changed == 1)
+-            {
+-                if(app_mode.is_in_usb_mode)
+-                {
++    while (k_msgq_get(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT) == 0) {
++        if (ev.app_cur_mode == BT_MODE) {
++            if (ev.state_changed == 1) {
++                if (app_mode.is_in_usb_mode) {
+                     return;
+-                }
+-                else
+-                {
++                } else {
+                     LOG_DBG("[zmk_mode_monitor_handler]:reset to enter bt mode");
+                     app_system_reset(WDT_FLAG_RESET_SOC);
+                 }
+-            }
+-            else 
+-            {
+-                if(app_mode.is_in_usb_mode)
+-                {
++            } else {
++                if (app_mode.is_in_usb_mode) {
+                     return;
+                 }
+                 LOG_DBG("[zmk_mode_monitor_handler]:reset to exit bt mode");
+                 // app_system_reset(WDT_FLAG_RESET_SOC);
+             }
+-        }
+-        else if(ev.app_cur_mode == USB_MODE)
+-        {
+-            if(ev.state_changed == 1)
+-            {
++        } else if (ev.app_cur_mode == USB_MODE) {
++            if (ev.state_changed == 1) {
+                 zmk_usb_init();
+-            }
+-            else
+-            {
++            } else {
+                 zmk_usb_deinit();
+-                if(app_mode.is_in_bt_mode)
+-                {
++                if (app_mode.is_in_bt_mode) {
+                     LOG_DBG("[zmk_mode_monitor_handler]:reset to exit usb and enter bt mode");
+                     app_system_reset(WDT_FLAG_RESET_SOC);
+                 }
+             }
+-        }
+-        else
+-        {
++        } else {
+             return;
+         }
+     }
+-    return; 
++    return;
+ }
+ 
+ static int zmk_mode_monitor_init(void) {
+ 
+     LOG_DBG("zmk_mode_monitor_init");
+ 
+-    k_work_init(&mm_msg_processor.work,zmk_mode_monitor_handler);
++    k_work_init(&mm_msg_processor.work, zmk_mode_monitor_handler);
+ 
+     /* gpio leds config */
+     gpio_pin_interrupt_configure_dt(&leds_pwron, GPIO_INT_DISABLE);
+@@ -206,19 +175,16 @@ static int zmk_mode_monitor_init(void) {
+ 
+     /* 2.4G Mode monitor callback enable and pin config */
+     gpio_init_callback(&zmk_mode_monitor_ppt_cb, zmk_mode_monitor_callback, BIT((&ppt_irq)->pin));
+-     int  rc = gpio_add_callback((&ppt_irq)->port, &zmk_mode_monitor_ppt_cb);
++    int rc = gpio_add_callback((&ppt_irq)->port, &zmk_mode_monitor_ppt_cb);
+     if (rc != 0) {
+         LOG_ERR("configure zmk ppt leds fail, err:%d ", rc);
+     }
+ 
+     gpio_pin_configure_dt(&ppt_irq, GPIO_INPUT | GPIO_PULL_UP | PIN_PPT_FLAGS);
+-    if(!gpio_pin_get_raw(ppt_irq.port,ppt_irq.pin))
+-    {
++    if (!gpio_pin_get_raw(ppt_irq.port, ppt_irq.pin)) {
+         gpio_pin_set(ppt_led.port, ppt_led.pin, 0);
+         rc = gpio_pin_interrupt_configure_dt(&ppt_irq, GPIO_INT_LEVEL_HIGH);
+-    }
+-    else
+-    {
++    } else {
+         rc = gpio_pin_interrupt_configure_dt(&ppt_irq, GPIO_INT_LEVEL_LOW);
+     }
+     if (rc != 0) {
+@@ -232,14 +198,11 @@ static int zmk_mode_monitor_init(void) {
+         LOG_ERR("configure zmk ble leds fail, err:%d ", rc);
+     }
+     gpio_pin_configure_dt(&bt_irq, GPIO_INPUT | GPIO_PULL_UP | PIN_BLE_FLAGS);
+-    if(!gpio_pin_get_raw(bt_irq.port,bt_irq.pin))
+-    {
++    if (!gpio_pin_get_raw(bt_irq.port, bt_irq.pin)) {
+         app_mode.is_in_bt_mode = true;
+         gpio_pin_set(bt_led.port, bt_led.pin, 0);
+         rc = gpio_pin_interrupt_configure_dt(&bt_irq, GPIO_INT_LEVEL_HIGH);
+-    }
+-    else
+-    {
++    } else {
+         rc = gpio_pin_interrupt_configure_dt(&bt_irq, GPIO_INT_LEVEL_LOW);
+     }
+     if (rc != 0) {
+@@ -247,7 +210,8 @@ static int zmk_mode_monitor_init(void) {
+     }
+ 
+     /* usb Mode monitor callback enable and pin config */
+-    gpio_init_callback(&zmk_mode_monitor_usb_cb, zmk_mode_monitor_callback, BIT((&detect_usb)->pin));
++    gpio_init_callback(&zmk_mode_monitor_usb_cb, zmk_mode_monitor_callback,
++                       BIT((&detect_usb)->pin));
+     rc = gpio_add_callback((&detect_usb)->port, &zmk_mode_monitor_usb_cb);
+     if (rc != 0) {
+         LOG_ERR("configure zmk usb cb fail, err:%d ", rc);
+@@ -261,92 +225,74 @@ static int zmk_mode_monitor_init(void) {
+     return 0;
+ }
+ 
+-static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
+-{
++static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer) {
+     int usb_pin_polarity_status = gpio_pin_get_raw(detect_usb.port, detect_usb.pin);
+ 
+-    if(is_usb_in_debonce_check)
+-    {
+-        if(usb_pin_polarity_status == GPIO_PIN_LEVEL_HIGH)
+-        {
+-            LOG_DBG("[usb_mode_monitor_debounce_timeout_cb]: usb_in_high_vol is %d",usb_in_high_vol_num);
+-            usb_in_high_vol_num ++;
+-            if(usb_in_high_vol_num >= USB_IN_DETECT_NUM)
+-            {
++    if (is_usb_in_debonce_check) {
++        app_global_data.is_app_enabled_dlps = false;
++        if (usb_pin_polarity_status == GPIO_PIN_LEVEL_HIGH) {
++            LOG_DBG("[usb_mode_monitor_debounce_timeout_cb]: usb_in_high_vol is %d",
++                    usb_in_high_vol_num);
++            usb_in_high_vol_num++;
++            if (usb_in_high_vol_num >= USB_IN_DETECT_NUM) {
+                 usb_out_low_vol_num = 0;
+                 /* usb in */
+                 is_usb_in_debonce_check = false;
++                app_global_data.is_app_enabled_dlps = true;
+                 gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_LEVEL_LOW);
+                 usb_mode_monitor_trigger_level = GPIO_PIN_LEVEL_LOW;
+-                
+-                struct zmk_mode_monitor_event ev = {
+-                    .app_cur_mode = USB_MODE,
+-                    .state_changed = 1
+-                };
++
++                struct zmk_mode_monitor_event ev = {.app_cur_mode = USB_MODE, .state_changed = 1};
+                 k_msgq_put(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT);
+                 k_work_submit(&mm_msg_processor.work);
+                 app_mode.is_in_usb_mode = true;
+                 return;
+             }
+-        }
+-        else
+-        {
++        } else {
+             usb_in_high_vol_num = 0;
+         }
+-        usb_in_debonce_timer_num ++;
+-         LOG_DBG("[usb_mode_monitor_debounce_timeout_cb] usb_in_debonce_timer_num is %d",
+-                        usb_in_debonce_timer_num);
++        usb_in_debonce_timer_num++;
++        LOG_DBG("[usb_mode_monitor_debounce_timeout_cb] usb_in_debonce_timer_num is %d",
++                usb_in_debonce_timer_num);
+         if (usb_in_debonce_timer_num < 40) /* 2s */
+         {
+-            k_timer_start(&usb_mode_monitor_timer, K_MSEC(50),K_NO_WAIT);
+-        }
+-        else
+-        {
+-            if(app_mode.is_in_usb_mode)
+-            {
++            k_timer_start(&usb_mode_monitor_timer, K_MSEC(50), K_NO_WAIT);
++        } else {
++            if (app_mode.is_in_usb_mode) {
+ 
+-            }
+-            else
+-            {
++            } else {
+                 is_usb_in_debonce_check = false;
+                 gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_LEVEL_HIGH);
+                 usb_mode_monitor_trigger_level = GPIO_PIN_LEVEL_HIGH;
+             }
+         }
+-    }
+-    else if(is_usb_out_debonce_check)
+-    {
+-        if(usb_pin_polarity_status == GPIO_PIN_LEVEL_LOW)
+-        {
+-            LOG_DBG("[usb_mode_monitor_debounce_timeout_cb]: usb_out_low_vol is %d",usb_out_low_vol_num);
+-            usb_out_low_vol_num ++;
++    } else if (is_usb_out_debonce_check) {
++        app_global_data.is_app_enabled_dlps = false;
++        if (usb_pin_polarity_status == GPIO_PIN_LEVEL_LOW) {
++            LOG_DBG("[usb_mode_monitor_debounce_timeout_cb]: usb_out_low_vol is %d",
++                    usb_out_low_vol_num);
++            usb_out_low_vol_num++;
+             if (usb_out_low_vol_num >= USB_OUT_DETECT_NUM) /* 300ms */
+             {
+                 /* usb out */
+                 usb_in_high_vol_num = 0;
+                 is_usb_out_debonce_check = false;
++                app_global_data.is_app_enabled_dlps = true;
+                 gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_LEVEL_HIGH);
+                 usb_mode_monitor_trigger_level = GPIO_PIN_LEVEL_HIGH;
+-                struct zmk_mode_monitor_event ev = {
+-                    .app_cur_mode = USB_MODE,
+-                    .state_changed = 0
+-                };
++                struct zmk_mode_monitor_event ev = {.app_cur_mode = USB_MODE, .state_changed = 0};
+                 k_msgq_put(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT);
+                 k_work_submit(&mm_msg_processor.work);
+                 return;
+             }
+-        }
+-        else
+-        {
++        } else {
+             usb_out_low_vol_num = 0;
+         }
+-        usb_out_debonce_timer_num ++;
++        usb_out_debonce_timer_num++;
+         if (usb_out_debonce_timer_num < 60) /* 3s */
+         {
+-            k_timer_start(&usb_mode_monitor_timer, K_MSEC(50),K_NO_WAIT);
+-        }
+-        else
+-        {
++            k_timer_start(&usb_mode_monitor_timer, K_MSEC(50), K_NO_WAIT);
++        } else {
+             is_usb_out_debonce_check = false;
+             gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_LEVEL_LOW);
+             usb_mode_monitor_trigger_level = GPIO_PIN_LEVEL_LOW;
+@@ -354,25 +300,13 @@ static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
+     }
+ }
+ 
+-void cap_led_on(void)
+-{
+-    gpio_pin_set(cap_led.port, cap_led.pin, 0);
+-}
++void cap_led_on(void) { gpio_pin_set(cap_led.port, cap_led.pin, 0); }
+ 
+-void cap_led_off(void)
+-{
+-    gpio_pin_set(cap_led.port, cap_led.pin, 1);
+-}
++void cap_led_off(void) { gpio_pin_set(cap_led.port, cap_led.pin, 1); }
+ 
+-void num_led_on(void)
+-{
+-    gpio_pin_set(num_led.port, num_led.pin, 0);
+-}
++void num_led_on(void) { gpio_pin_set(num_led.port, num_led.pin, 0); }
+ 
+-void num_led_off(void)
+-{
+-    gpio_pin_set(num_led.port, num_led.pin, 1);
+-}
++void num_led_off(void) { gpio_pin_set(num_led.port, num_led.pin, 1); }
+ 
+ /**
+  * @brief  CPU can enter wfi or dlps with checking all module status pass
+-- 
+2.42.0.windows.2
+

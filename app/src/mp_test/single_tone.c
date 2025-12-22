@@ -9,8 +9,6 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/logging/log.h>
-LOG_MODULE_DECLARE(mp_test, CONFIG_ZMK_LOG_LEVEL);
-
 #include <zmk/mode_monitor.h>
 #include <zmk/board.h>
 #include <zmk/mp_test/mp_test.h>
@@ -19,6 +17,8 @@ LOG_MODULE_DECLARE(mp_test, CONFIG_ZMK_LOG_LEVEL);
 #include "reset_reason.h"
 #include "mem_types.h"
 #include "trace.h"
+
+LOG_MODULE_DECLARE(mp_test, CONFIG_ZMK_LOG_LEVEL);
 
 /*============================================================================*
  *                                  Macros

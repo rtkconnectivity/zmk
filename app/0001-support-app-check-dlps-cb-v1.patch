@@ -1,0 +1,162 @@
+From 66a98b29a3730223398e7091b53ba66e9205bedc Mon Sep 17 00:00:00 2001
+From: dariel_zhang <dariel_zhang@realsil.com.cn>
+Date: Wed, 22 May 2024 16:11:41 +0800
+Subject: [PATCH] support app check dlps cb v1
+
+---
+ .../shields/rtk_keyboard/rtk_keyboard.keymap    |  2 +-
+ app/include/zmk/mode_monitor.h                  |  5 +++++
+ app/src/ble.c                                   |  3 +++
+ app/src/main.c                                  | 17 +++++++++++++++--
+ app/src/mode_monitor.c                          |  7 ++++++-
+ 5 files changed, 30 insertions(+), 4 deletions(-)
+
+diff --git a/app/boards/shields/rtk_keyboard/rtk_keyboard.keymap b/app/boards/shields/rtk_keyboard/rtk_keyboard.keymap
+index 7a60df8e..8fb70bca 100644
+--- a/app/boards/shields/rtk_keyboard/rtk_keyboard.keymap
++++ b/app/boards/shields/rtk_keyboard/rtk_keyboard.keymap
+@@ -38,7 +38,7 @@
+     &none  &none    &none     &none          &none   &none   &none           &none                                &none    &none       &none     &none            &none  &none
+     &none                                    &none   &none                   &none      &none    &none            &kp C_VOL_UP         &none     &none     &none  &none  &none  &none   &none
+     &none  &none    &kp C_BRI_DEC            &kp C_BRI_INC   &none  &none    &none      &kp C_PLAY_PAUSE  &none                        &kp C_NEXT    &none &none  &none   &none &none
+-    &kp C_AC_SEARCH   &none     &none          &none   &none   &none  &none    &none      &none    &none    &kp C_MUTE       &none     &none       &none   &none
++    &kp C_AC_SEARCH   &bt BT_CLR     &bt BT_CLR_ALL          &bt BT_DISC   &none   &none  &none    &none      &none    &none    &kp C_MUTE       &none     &none       &none   &none
+             >;
+         };
+         
+diff --git a/app/include/zmk/mode_monitor.h b/app/include/zmk/mode_monitor.h
+index 47bb77dd..ea479ca2 100644
+--- a/app/include/zmk/mode_monitor.h
++++ b/app/include/zmk/mode_monitor.h
+@@ -19,7 +19,12 @@ typedef struct APP_MODE {
+     bool is_in_ppt_mode;
+ } T_APP_MODE;
+ 
++typedef struct APP_GLOBAL_DATA {
++    bool is_app_enabled_dlps;
++} T_APP_GLOBAL_DATA;
++
+ extern T_APP_MODE app_mode;
++extern T_APP_GLOBAL_DATA app_global_data;
+ 
+ enum app_mode_type {
+     BT_MODE = 0,
+diff --git a/app/src/ble.c b/app/src/ble.c
+index dc74c124..1a57aa62 100644
+--- a/app/src/ble.c
++++ b/app/src/ble.c
+@@ -20,6 +20,7 @@
+ #include <zephyr/bluetooth/uuid.h>
+ #include <zephyr/bluetooth/gatt.h>
+ #include <zephyr/bluetooth/hci_types.h>
++#include <zmk/mode_monitor.h>
+ 
+ #if IS_ENABLED(CONFIG_SETTINGS)
+ 
+@@ -438,6 +439,7 @@ static bool is_conn_active_profile(const struct bt_conn *conn) {
+ }
+ 
+ static void connected(struct bt_conn *conn, uint8_t err) {
++    app_global_data.is_app_enabled_dlps = false;
+     char addr[BT_ADDR_LE_STR_LEN];
+     struct bt_conn_info info;
+     LOG_DBG("Connected thread: %p", k_current_get());
+@@ -512,6 +514,7 @@ static void le_param_updated(struct bt_conn *conn, uint16_t interval, uint16_t l
+     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+ 
+     LOG_DBG("%s: interval %d latency %d timeout %d", addr, interval, latency, timeout);
++    app_global_data.is_app_enabled_dlps = true;
+ }
+ 
+ static struct bt_conn_cb conn_callbacks = {
+diff --git a/app/src/main.c b/app/src/main.c
+index 8ec715bc..f07d2105 100644
+--- a/app/src/main.c
++++ b/app/src/main.c
+@@ -21,9 +21,22 @@ LOG_MODULE_REGISTER(zmk, CONFIG_ZMK_LOG_LEVEL);
+ #include <drivers/ext_power.h>
+ #include "trace.h"
+ 
++#if CONFIG_PM
++#include "power_manager_unit_platform.h"
++enum PMCheckResult app_check_dlps(void) {
++    DBG_DIRECT("app check dlps %d", app_global_data.is_app_enabled_dlps);
++    return app_global_data.is_app_enabled_dlps ? PM_CHECK_PASS : PM_CHECK_FAIL;
++}
++static void app_register_dlps_cb(void) {
++    platform_pm_register_callback_func((void *)app_check_dlps, PLATFORM_PM_CHECK);
++}
++#endif
++
+ int main(void) {
+     LOG_INF("Welcome to ZMK!\n");
+-
++#if CONFIG_PM
++    app_register_dlps_cb();
++#endif
+     if (zmk_kscan_init(DEVICE_DT_GET(ZMK_MATRIX_NODE_ID)) != 0) {
+         return -ENOTSUP;
+     }
+@@ -42,4 +55,4 @@ int main(void) {
+ #endif /* CONFIG_ZMK_DISPLAY */
+ 
+     return 0;
+-}
++}
+\ No newline at end of file
+diff --git a/app/src/mode_monitor.c b/app/src/mode_monitor.c
+index be32c6b6..3c61fb60 100644
+--- a/app/src/mode_monitor.c
++++ b/app/src/mode_monitor.c
+@@ -58,6 +58,7 @@ struct zmk_mode_monitor_event {
+     uint8_t state_changed;
+ };
+ T_APP_MODE app_mode = {false};
++T_APP_GLOBAL_DATA app_global_data = {.is_app_enabled_dlps = true};
+ 
+ K_MSGQ_DEFINE(zmk_mode_monitor_msgq, sizeof(struct zmk_mode_monitor_event), 4, 4);
+ 
+@@ -274,6 +275,7 @@ static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
+ 
+     if(is_usb_in_debonce_check)
+     {
++        app_global_data.is_app_enabled_dlps = false;
+         if(usb_pin_polarity_status == GPIO_PIN_LEVEL_HIGH)
+         {
+             LOG_DBG("[usb_mode_monitor_debounce_timeout_cb]: usb_in_high_vol is %d",usb_in_high_vol_num);
+@@ -285,7 +287,7 @@ static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
+                 is_usb_in_debonce_check = false;
+                 gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_LEVEL_LOW);
+                 usb_mode_monitor_trigger_level = GPIO_PIN_LEVEL_LOW;
+-                
++ 
+                 struct zmk_mode_monitor_event ev = {
+                     .app_cur_mode = USB_MODE,
+                     .state_changed = 1
+@@ -293,6 +295,7 @@ static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
+                 k_msgq_put(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT);
+                 k_work_submit(&mm_msg_processor.work);
+                 app_mode.is_in_usb_mode = true;
++                app_global_data.is_app_enabled_dlps = true;
+                 return;
+             }
+         }
+@@ -323,6 +326,7 @@ static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
+     }
+     else if(is_usb_out_debonce_check)
+     {
++        app_global_data.is_app_enabled_dlps = false;
+         if(usb_pin_polarity_status == GPIO_PIN_LEVEL_LOW)
+         {
+             LOG_DBG("[usb_mode_monitor_debounce_timeout_cb]: usb_out_low_vol is %d",usb_out_low_vol_num);
+@@ -340,6 +344,7 @@ static void usb_mode_monitor_debounce_timeout_cb(struct k_timer *timer)
+                 };
+                 k_msgq_put(&zmk_mode_monitor_msgq, &ev, K_NO_WAIT);
+                 k_work_submit(&mm_msg_processor.work);
++                app_global_data.is_app_enabled_dlps = true;
+                 return;
+             }
+         }
+-- 
+2.42.0.windows.2
+

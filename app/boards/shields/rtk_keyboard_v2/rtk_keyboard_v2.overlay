@@ -75,7 +75,7 @@
     #address-cells = <1>;
     #size-cells = <0>;
     status = "okay";
-    is-bypass-mode;
+    is-bypass-mode = <0x4>;
     channel@2 {
         reg = <2>;
         zephyr,gain = "ADC_GAIN_1";
@@ -118,6 +118,8 @@
         ppt-gpios = <&gpioa 8 (GPIO_ACTIVE_HIGH | RTL87X2G_GPIO_INPUT_DEBOUNCE_MS(8))>;
         detect-usb-gpios = <&gpiob 28 (GPIO_ACTIVE_HIGH | RTL87X2G_GPIO_INPUT_DEBOUNCE_MS(20))>;
         win2mac-gpios = <&gpioa 31 (GPIO_ACTIVE_HIGH | RTL87X2G_GPIO_INPUT_DEBOUNCE_MS(8))>;
+        mptest-gpios = <&gpioa 25 GPIO_ACTIVE_HIGH>,
+                       <&gpioa 24 GPIO_ACTIVE_HIGH>;
     };
 
     ppt: ppt {
@@ -200,4 +202,10 @@
              psels = <RTL87X2G_PSEL(SW_MODE, P2_2, DIR_IN, DRV_LOW, PULL_NONE)>;
         };
     };
+};
+
+&zephyr_udc0 {
+	cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+	};
 };

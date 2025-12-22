@@ -1,0 +1,52 @@
+manifest:
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+    - name: rtkconnectivity
+      url-base: git@github.com:rtkconnectivity
+    - name: YuzhuoLiuRTK
+      url-base: git@github.com:YuzhuoLiuRTK
+  projects:
+    - name: zephyr
+      remote: YuzhuoLiuRTK
+      revision: realtek-v3.5.0
+      clone-depth: 1
+      import:
+        name-blocklist:
+          - ci-tools
+          - hal_altera
+          - hal_cypress
+          - hal_infineon
+          - hal_microchip
+          - hal_nxp
+          - hal_openisa
+          - hal_silabs
+          - hal_xtensa
+          - hal_st
+          - hal_ti
+          - hal_ambiq
+          - hal_atmel
+          - hal_espressif
+          - hal_ethos_u
+          - hal_gigadevice
+          - hal_intel
+          - hal_nordic
+          - hal_nuvoton
+          - hal_quicklogic
+          - hal_renesas
+          - hal_rpi_pico
+          - hal_telink
+          - hal_wurthelektronik
+          - hal_stm32
+          - cmsis-dsp
+          - cmsis-nn
+          - fatfs
+          - loramac-node
+          - mcuboot
+          - mcumgr
+          - net-tools
+          - openthread
+          - edtt
+          - trusted-firmware-m
+  self:
+    west-commands: scripts/west-commands.yml

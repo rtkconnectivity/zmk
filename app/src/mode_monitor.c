@@ -15,11 +15,11 @@
 #include <zmk/ppt/keyboard_ppt_app.h>
 #include <zmk/leds/leds_gpio_driver.h>
 #include <zmk/keymap.h>
+#include <zephyr/dt-bindings/gpio/realtek-rtl87x2g-gpio.h>
+#include "trace.h"
 #if IS_ENABLED(CONFIG_PM)
 #include <pm.h>
 #endif
-
-#include "trace.h"
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -199,7 +199,7 @@ static int zmk_mode_monitor_init(void) {
     if (rc != 0) {
         LOG_ERR("configure zmk ppt leds fail, err:%d ", rc);
     }
-    gpio_pin_configure_dt(&ppt_irq, GPIO_INPUT | GPIO_PULL_UP | PIN_PPT_FLAGS);
+    gpio_pin_configure_dt(&ppt_irq, GPIO_INPUT | GPIO_PULL_UP | PIN_PPT_FLAGS | RTL87X2G_GPIO_INPUT_PM_WAKEUP);
     if (!gpio_pin_get_raw(ppt_irq.port, ppt_irq.pin)) {
         app_mode.is_in_ppt_mode = true;
         LED_ON(LED_PPT);
@@ -216,7 +216,7 @@ static int zmk_mode_monitor_init(void) {
     if (rc != 0) {
         LOG_ERR("configure zmk ble leds fail, err:%d ", rc);
     }
-    gpio_pin_configure_dt(&bt_irq, GPIO_INPUT | GPIO_PULL_UP | PIN_BLE_FLAGS);
+    gpio_pin_configure_dt(&bt_irq, GPIO_INPUT | GPIO_PULL_UP | PIN_BLE_FLAGS | RTL87X2G_GPIO_INPUT_PM_WAKEUP);
     if (!gpio_pin_get_raw(bt_irq.port, bt_irq.pin)) {
         app_mode.is_in_bt_mode = true;
         LED_ON(LED_BT);
@@ -235,7 +235,7 @@ static int zmk_mode_monitor_init(void) {
     if (rc != 0) {
         LOG_ERR("configure win2mac gpio cb fail, err:%d ", rc);
     }
-    gpio_pin_configure_dt(&win2mac, GPIO_INPUT | GPIO_PULL_UP | PIN_BLE_FLAGS);
+    gpio_pin_configure_dt(&win2mac, GPIO_INPUT | GPIO_PULL_UP | PIN_BLE_FLAGS | RTL87X2G_GPIO_INPUT_PM_WAKEUP);
     if (!gpio_pin_get_raw(win2mac.port, win2mac.pin)) {
         LOG_DBG("gpio_pin_get_raw win2mac low, set to windows");
         app_mode.is_in_windows = true;
@@ -257,7 +257,7 @@ static int zmk_mode_monitor_init(void) {
     if (rc != 0) {
         LOG_ERR("configure zmk usb cb fail, err:%d ", rc);
     }
-    gpio_pin_configure_dt(&detect_usb, GPIO_INPUT);
+    gpio_pin_configure_dt(&detect_usb, GPIO_INPUT | RTL87X2G_GPIO_INPUT_PM_WAKEUP);
     rc = gpio_pin_interrupt_configure_dt(&detect_usb, GPIO_INT_LEVEL_HIGH);
     if (rc != 0) {
         LOG_ERR("configure zmk usb leds fail, err:%d ", rc);

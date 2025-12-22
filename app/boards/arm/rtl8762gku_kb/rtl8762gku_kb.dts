@@ -7,10 +7,10 @@
     compatible = "realtek,rtl8762gku";
 
     chosen {
-        zephyr,sram = &ram_data;
+        zephyr,sram = &tcm0;
         zephyr,flash = &flash;
         zephyr,code-partition = &app_partition;
-        zephyr,itcm = &ram_code;
+        zephyr,itcm = &tcm1;
         zephyr,console = &uart2;
         zephyr,shell-uart = &uart2;
         zephyr,flash-controller = &fmc;
@@ -79,4 +79,9 @@
     parity = "none";
     stop-bits = "1";
     data-bits = <8>;
+};
+
+zephyr_udc0: &usb {
+    compatible = "realtek,rtl87x2g-usb";
+    status = "okay";
 };
